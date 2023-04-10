@@ -93,3 +93,8 @@ fault_detected = detect_fault(data, tracking_size, type_to_check, frozen_thresho
 print(f"Is fault detected? {fault_detected['fault_detected']}")
 # Is fault detected? False
 ```
+
+---
+
+#### Sensor Validation Flow Chart에서 Univariate Monitoring : Classfiy Fault를 확인할 수 있습니다.
+![image](https://user-images.githubusercontent.com/80809187/230880252-aa5fc285-3382-4442-a59c-fd60d310505a.png)
