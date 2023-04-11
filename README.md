@@ -1,14 +1,12 @@
 # Univariate Monitoring
 
 ## classify_fault
-classify_fault는 단변량 통계를 이용하여 변수 유형을 확인하고, 각 유형의 장애를 감지하는 패키지입니다.
+classify_fault는 단변량 통계를 이용하여 변수의 고장을 감지하는 패키지입니다.
 
 ---
 
 ### 패키지 구성
 ```
-arduino
-Copy code
 classify_fault/
     utils/
         convert_type.py
