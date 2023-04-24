@@ -41,7 +41,7 @@ def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
     
     # CUSUM 알고리즘 수행
     C_plus = max(0, C_plus + data_point - average - cusum_threshold)
-    C_minus = max(0, C_minus - data_point + average - cusum_threshold)
+    C_minus = min(0, C_minus - data_point + average - cusum_threshold)
     
     return C_plus, C_minus
 
@@ -90,7 +90,8 @@ def detect_drift(data_point: float, average: float,
                  cusum_threshold=None, 
                  ewma_alpha=None, 
                  C_plus=0, C_minus=0, 
-                 smoothed_data=None):
+                 smoothed_data=None,
+                 cusum_limit=10):
     """CUSUM과 EWMA 알고리즘을 사용하여 입력값의 drift를 추적하고 결과를 반환합니다.
 
     Args:
@@ -151,7 +152,7 @@ def detect_drift(data_point: float, average: float,
         # Calculate CUSUM
         C_plus, C_minus = calculate_cusum(data_point, average, cusum_threshold, C_plus=C_plus, C_minus=C_minus)
         # Detected Drift
-        detected = (C_plus > cusum_threshold) or (C_minus > cusum_threshold)
+        detected = (C_plus > cusum_limit) or (C_minus < -cusum_limit)
         result['CUSUM'] = {'detected': detected, 'C_plus': C_plus, 'C_minus': C_minus}
     
     if ewma_alpha is not None:

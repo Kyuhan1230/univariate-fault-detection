@@ -1,8 +1,11 @@
 import yaml
 import numpy as np
+import pandas as pd
 
 
-def calculate_variables_config(tag_list: list, data, type_to_check=None, frozen_threshold=0.01, tracking_size=5, boundary_limits=None, drift_params=None):
+def calculate_variables_config(tag_list: list, data, type_to_check=None, 
+                               frozen_threshold=0.01, tracking_size=5, 
+                               boundary_limits=None, drift_params=None):
     """
     주어진 데이터를 바탕으로 변수 설정값을 계산합니다.
     
@@ -37,19 +40,25 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None, frozen_
     if drift_params is None:
         drift_params = [None] * len(tag_list)
 
+    staticstic = get_statistics(data=data, columns_list=tag_list)
+    if staticstic['success'] is False:
+        raise ValueError("Can't Calcualte Statistic. Something is wrong.")
+
     variables_config = {}
     for i, tag in enumerate(tag_list):
         mean = float(np.mean(data[:, i]))
         std = float(np.std(data[:, i]))
 
         if boundary_limits[i] is None:
-            boundary_limits[i] = (mean + 3 * std, mean - 3 * std)
+            boundary_limits[i] = {"high": mean + 3 * std, 
+                                  "low": mean - 3 * std}
 
         if drift_params[i] is None:
             drift_params[i] = {
                 "average": mean,
                 "cusum_threshold": 5 * std * 3 / 2,
-                "ewma_alpha": 0.1
+                "ewma_alpha": 0.1,
+                "cusum_limit": 10
             }
 
         variables_config[tag] = {
@@ -59,10 +68,64 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None, frozen_
             "tracking_size": tracking_size,
             "boundary_limits": boundary_limits[i],
             "dynamic_threshold": 0.5,
-            "drift_params": drift_params[i]
+            "drift_params": drift_params[i],
+            "statistic": staticstic["result"][tag]
         }
 
     return variables_config
+
+
+def get_statistics(data, columns_list=None):
+    """
+    주어진 데이터를 바탕으로 데이터의 통계치 dictionary를 완성합니다.
+    
+    Args:
+        data (list or np.ndarray or pd.DataFrame): 분석할 데이터
+        columns_list (list, optional): 분석할 칼럼 이름 리스트
+    
+    Returns:
+        dict: 데이터의 통계치를 담은 딕셔너리
+            - success (bool): 함수 실행 결과를 나타내는 값
+                처리가 제대로 이루어졌으면 True, 그렇지 않으면 False
+            - result (dict): 데이터의 통계치를 담은 딕셔너리
+                - mean: 평균값
+                - std: 표준편차
+                - median: 중앙값
+                - quantile1: 1사분위수
+                - quantile3: 3사분위수
+                - iqr: 사분위 범위(iqr)
+                - min: 최소값
+                - max: 최대값
+                - oldest_value: 가장 오래된 데이터 값
+                - data_size: 데이터 크기
+    """
+    if not isinstance(data, (list, np.ndarray, pd.DataFrame)):
+        raise ValueError(f"Invalid data type. Expected list or np.ndarray or pd.DataFrame, but got {type(data)}")
+
+    if isinstance(data, pd.DataFrame):
+        if columns_list is None:
+            columns_list = data.columns.tolist()
+        data = data.values
+
+    statistics = {}
+
+    for i, column_name in enumerate(columns_list):
+        column_data = data[:, i]
+        mean = float(np.mean(column_data))
+        std = float(np.std(column_data, ddof=1))
+        median = float(np.median(column_data))
+        q1 = float(np.quantile(column_data, 0.25))
+        q3 = float(np.quantile(column_data, 0.75))
+        iqr = q3 - q1
+        min_val = float(np.min(column_data))
+        max_val = float(np.max(column_data))
+        oldest_value = float(column_data[0])
+        data_size = int(column_data.size)
+
+        statistics[column_name] = {"mean": mean, "std": std, "median": median, "quantile1": q1, "quantile3": q3,
+                                    "iqr": iqr, "min": min_val, "max": max_val, "oldest_value": oldest_value,
+                                    "data_size": data_size}
+    return {"success": True, "result": statistics}
 
 
 def save_config(data, yaml_file_path='./config/variable_config.yaml'):
@@ -96,14 +159,3 @@ def load_config(yaml_file_path='./config/variable_config.yaml'):
         data = yaml.load(f, Loader=yaml.FullLoader)
 
     return data
-
-
-tag_list = ["Var1", "Var2"]
-data = np.array([
-            [1, 10],
-            [2, 9],
-            [3, 11],
-            [4, 10],
-            [5, 12],
-            [6, 9]
-        ])

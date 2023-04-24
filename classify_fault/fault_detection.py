@@ -42,7 +42,7 @@ def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boun
 
             frozen_threshold = 0.5
             tracking_size = 3
-            boundary_limits = (12, 0)
+            boundary_limits = {"high": 12, "low":0 }
             dynamic_threshold = 2.5
             drift_params = {"average": 2, ", cusum_threshold": 4.0, "ewma_alpha": 0.2}
 
@@ -62,7 +62,7 @@ def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boun
         # 2. Boundary Test
         if type_to_check.get("boundary"):
             x = data[-1]  # 가장 최근 데이터
-            high, low = boundary_limits
+            high, low = boundary_limits['high'], boundary_limits['low']
 
             result = detect_out_of_bounds(x, high, low)
             boundary_detected = result["result"][0]
