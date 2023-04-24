@@ -12,24 +12,27 @@ def test_fault_detection_with_config():
     tag_list = ["Var1", "Var2"]
     data = np.array([
         [1, 10],
-        [2, 9],
-        [3, 11],
-        [4, 10],
-        [5, 12],
-        [6, 9]
+        [1.2, 9],
+        [1.3, 11],
+        [0.94, 10],
+        [1.05, 12],
+        [0.96, 9]
     ])
     variables_config = calculate_variables_config(tag_list, data)
 
     save_config(variables_config, "./config/test_config.yaml")
     loaded_config = load_config("./config/test_config.yaml")
 
-    data_to_test = np.array([[10, 20]])
-
-    result = detect_fault(data_to_test[0], 
-                          loaded_config["Var1"]["tracking_size"], loaded_config["Var1"]["type_to_check"],
-                          loaded_config["Var1"]["frozen_threshold"], loaded_config["Var1"]["boundary_limits"],
-                          loaded_config["Var1"]["dynamic_threshold"], loaded_config["Var1"]["drift_params"])
-
+    test_data = np.array([[5, 20]])
+    
+    data_to_test_ = np.concatenate((data[:, 0], test_data[:, 0]))
+    result = detect_fault(data=data_to_test_, 
+                          tracking_size=loaded_config["Var1"]["tracking_size"], 
+                          type_to_check=loaded_config["Var1"]["type_to_check"],
+                          frozen_threshold=loaded_config["Var1"]["frozen_threshold"], 
+                          boundary_limits=loaded_config["Var1"]["boundary_limits"],
+                          dynamic_threshold=loaded_config["Var1"]["dynamic_threshold"], 
+                          drift_params=loaded_config["Var1"]["drift_params"])
 
     assert result["success"], f"Error occurred: {result['message']}"
     assert result["fault_detected"]
@@ -42,7 +45,7 @@ def test_fault_detection_with_config():
 
 
 def test_fault_detection():
-    data = np.array([1, 2, 2, 2, 2, 10])
+    data = np.array([1, 1.2, 1.3, 0.94, 1.05, 0.96, 5])
     type_to_check = {
         "frozen": True,
         "boundary": True,
@@ -51,8 +54,8 @@ def test_fault_detection():
     }
     frozen_threshold = 0.5
     tracking_size = 3
-    boundary_limits = (4, 0)
-    dynamic_threshold = 1
+    boundary_limits = {"high": 4, "low": 0}
+    dynamic_threshold = 0.5
     drift_params = {"average": 2, "cusum_threshold": 4.0, "ewma_alpha": 0.2}
 
     result = detect_fault(data, tracking_size, type_to_check, frozen_threshold, boundary_limits, dynamic_threshold, drift_params)
@@ -85,6 +88,13 @@ def test_save_load_config():
     os.remove("./config/test_config.yaml")
 
 if __name__ == "__main__":
-    test_fault_detection_with_config()
-    test_fault_detection()
     test_save_load_config()
+    print("\033[43mtest_save_load_config: Done, Success\033[0m")
+
+    test_fault_detection()
+    print("\033[43mtest_fault_detection: Done, Success\033[0m")
+
+    test_fault_detection_with_config()
+    print("\033[43mtest_fault_detection_with_config: Done, Success\033[0m")
+    
+    
