@@ -43,7 +43,7 @@ def detect_out_of_bounds(x: float, high: Optional[float] = None, low: Optional[f
         return {"success": x >= low, "result": [x < low, low] if x < low else [False, clipped]}
 
     clipped = np.clip(x, low, high)
-    return {"success": clipped == x, "result": [clipped < low or clipped > high, low if clipped < low else high] if clipped != x else [False, clipped]}
+    return {"success": True, "result": [x < low or x > high, low if x < low else high] if clipped != x else [False, x]}
 
 
 def set_boundary(statistics, boundary_type, x, sigma_level, tag_name):
@@ -117,60 +117,6 @@ def set_boundary(statistics, boundary_type, x, sigma_level, tag_name):
         high = avg + sigma_level * std
         low = avg - sigma_level * std
         return {"success": True, "result": [high, low]}
-
-
-
-def get_statistics(data, columns_list=None):
-    """
-    주어진 데이터를 바탕으로 데이터의 통계치 dictionary를 완성합니다.
-    
-    Args:
-        data (list or np.ndarray or pd.DataFrame): 분석할 데이터
-        columns_list (list, optional): 분석할 칼럼 이름 리스트
-    
-    Returns:
-        dict: 데이터의 통계치를 담은 딕셔너리
-            - success (bool): 함수 실행 결과를 나타내는 값
-                처리가 제대로 이루어졌으면 True, 그렇지 않으면 False
-            - result (dict): 데이터의 통계치를 담은 딕셔너리
-                - mean: 평균값
-                - std: 표준편차
-                - median: 중앙값
-                - Quantile1: 1사분위수
-                - Quantile3: 3사분위수
-                - IQR: 사분위 범위(IQR)
-                - min: 최소값
-                - max: 최대값
-                - oldest_value: 가장 오래된 데이터 값
-                - data_size: 데이터 크기
-    """
-    if not isinstance(data, (list, np.ndarray, pd.DataFrame)):
-        raise ValueError(f"Invalid data type. Expected list or np.ndarray or pd.DataFrame, but got {type(data)}")
-
-    if isinstance(data, pd.DataFrame):
-        if columns_list is None:
-            columns_list = data.columns.tolist()
-        data = data.values
-
-    statistics = {}
-
-    for i, column_name in enumerate(columns_list):
-        column_data = data[:, i]
-        mean = np.mean(column_data)
-        std = np.std(column_data, ddof=1)
-        median = np.median(column_data)
-        Q1 = np.quantile(column_data, 0.25)
-        Q3 = np.quantile(column_data, 0.75)
-        IQR = Q3 - Q1
-        min_val = np.min(column_data)
-        max_val = np.max(column_data)
-        oldest_value = column_data[0]
-        data_size = column_data.size
-
-        statistics[column_name] = {"mean": mean, "std": std, "median": median, "Quantile1": Q1, "Quantile3": Q3,
-                                    "IQR": IQR, "min": min_val, "max": max_val, "oldest_value": oldest_value,
-                                    "data_size": data_size}
-    return {"success": True, "result": statistics}
 
 
 """
