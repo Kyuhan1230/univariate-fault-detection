@@ -159,16 +159,3 @@ def load_config(yaml_file_path='./config/variable_config.yaml'):
         data = yaml.load(f, Loader=yaml.FullLoader)
 
     return data
-
-
-tag_list = ["Var1", "Var2"]
-data = np.array([
-            [1, 10],
-            [2, 9],
-            [3, 11],
-            [4, 10],
-            [5, 12],
-            [6, 9]
-        ])
-res = calculate_variables_config(data=data, tag_list=tag_list)
-print(res)
