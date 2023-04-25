@@ -58,7 +58,10 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
                 "average": mean,
                 "cusum_threshold": 5 * std * 3 / 2,
                 "ewma_alpha": 0.1,
-                "cusum_limit": 10
+                "ewma_smoothed": 0,
+                "cusum_limit": 5,
+                "cusum_plus": 0,
+                "cusum_minus": 0
             }
 
         variables_config[tag] = {
