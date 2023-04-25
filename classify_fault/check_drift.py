@@ -43,8 +43,8 @@ def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
         raise ValueError("cusum_threshold는 양수이어야 합니다.")
     
     # CUSUM 알고리즘 수행
-    C_plus_ = max(0, C_plus + data_point - average - cusum_threshold)
-    C_minus_ = min(0, C_minus - data_point + average - cusum_threshold)
+    C_plus_ = max(0, C_plus + data_point - (average + cusum_threshold))
+    C_minus_ = min(0, C_minus + data_point - (average - cusum_threshold))
     
     # CUSUM False 알람 최소화를 위한 추가 알고리즘
     C_plus = C_plus_ if C_plus_ >= C_plus else 0
