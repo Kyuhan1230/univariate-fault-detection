@@ -9,7 +9,7 @@ import traceback
 def detect_fault(data, tracking_size, type_to_check, 
                  frozen_threshold=None, boundary_limits=None, 
                  dynamic_threshold=None, drift_params=None,
-                 tag=None, config_path='./config/variable_config.yaml'):
+                 tag=None, config_path='./config/variable_config.json'):
     """
     변수 유형을 확인하고, 각 유형의 장애를 감지하는 함수입니다.
     

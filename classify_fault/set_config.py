@@ -1,4 +1,4 @@
-import yaml
+import json
 import numpy as np
 import pandas as pd
 
@@ -131,34 +131,34 @@ def get_statistics(data, columns_list=None):
     return {"success": True, "result": statistics}
 
 
-def save_config(data, yaml_file_path='./config/variable_config.yaml'):
+def save_config(data, json_file_path='./config/variable_config.json'):
     """
-    주어진 데이터를 YAML 형식으로 저장합니다.
+    주어진 데이터를 JSON 형식으로 저장합니다.
     
     Args:
         data (dict): 변수 설정값을 담고 있는 딕셔너리
-        yaml_file_path (str, optional): 저장할 YAML 파일 경로, default는 './config/variable_config.yaml'
+        json_file_path (str, optional): 저장할 JSON 파일 경로, default는 './config/variable_config.json'
     """
-    # YAML 형식으로 변환합니다.
-    yaml_data = yaml.dump(data, default_flow_style=False)
+    # JSON 형식으로 변환합니다.
+    json_data = json.dumps(data, indent=4)
 
     # 파일로 저장합니다.
-    with open(yaml_file_path, 'w') as f:
-        f.write(yaml_data)
+    with open(json_file_path, 'w') as f:
+        f.write(json_data)
 
 
-def load_config(yaml_file_path='./config/variable_config.yaml'):
+def load_config(json_file_path='./config/variable_config.json'):
     """
-    주어진 YAML 파일을 로드합니다.
+    주어진 JSON 파일을 로드합니다.
     
     Args:
-        yaml_file_path (str, optional): 로드할 YAML 파일 경로, default는 './config/variable_config.yaml'
+        json_file_path (str, optional): 로드할 JSON 파일 경로, default는 './config/variable_config.json'
     
     Returns:
         dict: 변수 설정값을 담고 있는 딕셔너리
     """
-    # YAML 파일을 읽어와 딕셔너리로 변환합니다.
-    with open(yaml_file_path, 'r') as f:
-        data = yaml.load(f, Loader=yaml.FullLoader)
+    # JSON 파일을 읽어와 딕셔너리로 변환합니다.
+    with open(json_file_path, 'r') as f:
+        data = json.load(f)
 
     return data

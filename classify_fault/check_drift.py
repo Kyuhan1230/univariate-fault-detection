@@ -1,5 +1,5 @@
 import os
-import yaml
+import json
 import numpy as np
 from .utils.convert_type import numpy_to_python_type
 
@@ -194,11 +194,11 @@ def update_drift_result(config_path: str, tag: str, drift_result: dict):
     if not isinstance(drift_result, dict):
         raise TypeError("The 'drift_result' argument should be a dictionary.")
         
-    # YAML 파일 로드
+    # JSON 파일 로드
     with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
+        config = json.load(f)
         
-    # tag가 YAML 파일에 있는지 확인
+    # tag가 JSON 파일에 있는지 확인
     if tag not in config:
         raise ValueError(f"Tag '{tag}' is not found in the configuration file.")
         
@@ -218,6 +218,6 @@ def update_drift_result(config_path: str, tag: str, drift_result: dict):
     config[tag]['drift_params']['cusum_minus'] = drift_result['cusum_minus']
     config[tag]['drift_params']['ewma_smoothed'] = drift_result['ewma_smoothed']
 
-    # YAML 파일 저장
+    # JSON 파일 저장
     with open(config_path, "w") as f:
-        yaml.safe_dump(config, f)
+        json.dump(config, f, indent=4)

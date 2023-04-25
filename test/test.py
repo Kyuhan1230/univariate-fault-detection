@@ -20,8 +20,8 @@ def test_fault_detection_with_config():
     ])
     variables_config = calculate_variables_config(tag_list, data)
 
-    save_config(variables_config, "./config/test_config.yaml")
-    loaded_config = load_config("./config/test_config.yaml")
+    save_config(variables_config, "./config/test_config.json")
+    loaded_config = load_config("./config/test_config.json")
 
     test_data = np.array([[5, 20]])
     
@@ -41,7 +41,7 @@ def test_fault_detection_with_config():
     assert result["Dynamics"]
     assert result["Drift"]==False
     # 파일 삭제
-    os.remove("./config/test_config.yaml")
+    os.remove("./config/test_config.json")
 
 
 def test_fault_detection():
@@ -80,12 +80,12 @@ def test_save_load_config():
     ])
     variables_config = calculate_variables_config(tag_list, data)
 
-    save_config(variables_config, "./config/test_config.yaml")
-    loaded_config = load_config("./config/test_config.yaml")
+    save_config(variables_config, "./config/test_config.json")
+    loaded_config = load_config("./config/test_config.json")
 
     assert variables_config == loaded_config
     # 파일 삭제
-    os.remove("./config/test_config.yaml")
+    os.remove("./config/test_config.json")
 
 if __name__ == "__main__":
     test_save_load_config()
