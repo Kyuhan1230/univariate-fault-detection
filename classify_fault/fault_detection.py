@@ -3,9 +3,13 @@ from classify_fault.check_boundary import *
 from classify_fault.check_drift import *
 from classify_fault.check_frozen import *
 from classify_fault.check_dynamics import *
+from classify_fault.utils.get_value_in_dict import get_value
 import traceback
 
-def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boundary_limits=None, dynamic_threshold=None, drift_params=None):
+def detect_fault(data, tracking_size, type_to_check, 
+                 frozen_threshold=None, boundary_limits=None, 
+                 dynamic_threshold=None, drift_params=None,
+                 tag=None, config_path='./config/variable_config.yaml'):
     """
     변수 유형을 확인하고, 각 유형의 장애를 감지하는 함수입니다.
     
@@ -51,6 +55,7 @@ def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boun
             >>> Is fault detected? False
     """
     fault_detected = False
+    values = {"frozen": None, "boundary": None, "dynamics": None, "drift": None}
     frozen_detected, boundary_detected, dynamic_detected, drift_detected = False, False, False, False
     try:
         # 1. Frozen Test
@@ -66,6 +71,7 @@ def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boun
 
             result = detect_out_of_bounds(x, high, low)
             boundary_detected = result["result"][0]
+            values['boundary'] = result['result']
             if boundary_detected:
                 fault_detected = True
 
@@ -77,10 +83,25 @@ def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boun
 
         # 4. Drift Test
         if type_to_check.get("drift"):
-            data_point = data[-1]
+            data_point = data[-1]  # 가장 최근 데이터
             average, cusum_threshold, ewma_alpha = drift_params['average'], drift_params['cusum_threshold'], drift_params['ewma_alpha']
-            result = detect_drift(data_point=data_point, average=average, cusum_threshold=cusum_threshold, ewma_alpha=ewma_alpha)
-            if result["CUSUM"]["detected"] or result["EWMA"]["detected"]:
+            cusum_plus_init = get_value(dictionary=drift_params, key='cusum_plus', default_value=0)
+            cusum_minus_init = get_value(dictionary=drift_params, key='cusum_minus', default_value=0)
+            result = detect_drift(data_point=data_point, average=average, cusum_threshold=cusum_threshold, ewma_alpha=ewma_alpha,
+                                  C_plus=cusum_plus_init, C_minus=cusum_minus_init)
+            # Update Drift History
+            cusum_plus=get_value(dictionary=result['CUSUM'], key='C_plus', default_value=0)
+            cusum_minus=get_value(dictionary=result['CUSUM'], key='C_minus', default_value=0)
+            ewma_smoothed=get_value(dictionary=result['EWMA'], key='smoothed_data', default_value=0)
+            update_drift_result(config_path=config_path, 
+                                tag=tag,
+                                drift_result={"cusum_plus": cusum_plus, 
+                                                "cusum_minus": cusum_minus,
+                                                "ewma_smoothed": ewma_smoothed})
+            # Update Values Dictionary
+            values['drift'] = [cusum_plus, cusum_minus]
+            # if result["CUSUM"]["detected"] or result["EWMA"]["detected"]:
+            if result["CUSUM"]["detected"]:
                 drift_detected = True
                 fault_detected = True
         
@@ -92,6 +113,6 @@ def detect_fault(data, tracking_size, type_to_check, frozen_threshold=None, boun
     
     result = {"success": success, "fault_detected": fault_detected, 
               "Frozen": frozen_detected, "Boundary": boundary_detected, "Dynamics": dynamic_detected, "Drift": drift_detected,
-              "message": message}
+              "message": message, "values": values}
     
     return result
