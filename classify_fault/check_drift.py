@@ -43,10 +43,16 @@ def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
         raise ValueError("cusum_threshold는 양수이어야 합니다.")
     
     # CUSUM 알고리즘 수행
-    C_plus = max(0, C_plus + data_point - average - cusum_threshold)
-    C_minus = min(0, C_minus - data_point + average - cusum_threshold)
+    C_plus_ = max(0, C_plus + data_point - average - cusum_threshold)
+    C_minus_ = min(0, C_minus - data_point + average - cusum_threshold)
     
+    # CUSUM False 알람 최소화를 위한 추가 알고리즘
+    C_plus = C_plus_ if C_plus_ >= C_plus else 0
+    C_minus = C_minus_ if C_minus_ <= C_minus else 0
+    print(round(C_plus, 3), round(C_minus, 3), round(data_point, 3), round(average, 3), 
+          round(cusum_threshold, 3), round(C_minus + data_point - (average - cusum_threshold), 3))
     return C_plus, C_minus
+
 
 
 def calculate_ewma(data_point, ewma_alpha, smoothed_data=None):
