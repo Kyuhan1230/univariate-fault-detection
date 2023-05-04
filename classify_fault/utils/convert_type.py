@@ -7,5 +7,7 @@ def numpy_to_python_type(value):
         return float(value)
     elif isinstance(value, (float, int)):
         return value
+    elif isinstance(value, np.ndarray) and value.ndim == 1:
+        return float(value)
     else:
         raise TypeError(f"Unsupported data type: {type(value)}")
