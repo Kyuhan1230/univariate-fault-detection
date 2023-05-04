@@ -52,7 +52,10 @@ def detect_frozen(data, frozen_threshold=0.01, n=5):
         print(f"Is frozen state detected? {frozen_detected}")
         # Is frozen state detected? True
     """
-    diff = np.abs(np.diff(data[-n:]))    # Calculate the absolute difference between recent N data points
+    if isinstance(data, np.ndarray):
+        data = data.ravel()
+        
+    diff = np.abs(np.diff(data[-n:]))    # Calculate the absolute difference between consecutive data points
     avg_diff = np.mean(diff)
 
     if avg_diff <= frozen_threshold:
