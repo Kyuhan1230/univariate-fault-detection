@@ -60,7 +60,8 @@ def detect_fault(data, tracking_size, type_to_check,
     try:
         # 1. Frozen Test
         if type_to_check.get("frozen"):
-            frozen_detected = detect_frozen(data, frozen_threshold, tracking_size)
+            frozen_detected, avg_diff = detect_frozen(data, frozen_threshold, tracking_size)
+            values['frozen'] = avg_diff
             if frozen_detected:
                 fault_detected = True
 
@@ -77,7 +78,8 @@ def detect_fault(data, tracking_size, type_to_check,
 
         # 3. Dynamic Test
         if type_to_check.get("dynamics"):
-            dynamic_detected = detect_dynamics(data=data, dynamic_threshold=dynamic_threshold)
+            dynamic_detected, avg_diff = detect_dynamics(data=data, dynamic_threshold=dynamic_threshold)
+            values['dynamics'] = avg_diff
             if dynamic_detected:
                 fault_detected = True
 

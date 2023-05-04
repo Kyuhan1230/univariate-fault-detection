@@ -59,6 +59,6 @@ def detect_frozen(data, frozen_threshold=0.01, n=5):
     avg_diff = np.mean(diff)
 
     if avg_diff <= frozen_threshold:
-        return True
-    return False
+        return True, avg_diff
+    return False, avg_diff
 
