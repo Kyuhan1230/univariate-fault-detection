@@ -49,8 +49,8 @@ def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
     # CUSUM False 알람 최소화를 위한 추가 알고리즘
     C_plus = C_plus_ if C_plus_ >= C_plus else 0
     C_minus = C_minus_ if C_minus_ <= C_minus else 0
-    print(round(C_plus, 3), round(C_minus, 3), round(data_point, 3), round(average, 3), 
-          round(cusum_threshold, 3), round(C_minus + data_point - (average - cusum_threshold), 3))
+    # print(C_plus, C_minus, data_point, average, 
+    #       cusum_threshold, C_minus + data_point - (average - cusum_threshold))
     return C_plus, C_minus
 
 
