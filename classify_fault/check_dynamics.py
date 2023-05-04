@@ -29,5 +29,5 @@ def detect_dynamics(data, dynamic_threshold, n=5):
     avg_diff = np.mean(diff)
 
     if avg_diff >= dynamic_threshold:
-        return True
-    return False
+        return True, avg_diff
+    return False, avg_diff
