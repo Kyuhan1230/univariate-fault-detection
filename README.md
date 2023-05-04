@@ -67,6 +67,8 @@ python test/test.py
 ---
 
 ### 예시
+
+아래는 example폴더의 example.ipynb의 내용입니다.
 ```
 import numpy as np
 from classify_fault.fault_detection import detect_fault
