@@ -56,7 +56,7 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
         if drift_params[i] is None:
             drift_params[i] = {
                 "average": mean,
-                "cusum_threshold": 5 * std * 3 / 2,
+                "cusum_threshold": 5 * std * 1 / 2,
                 "ewma_alpha": 0.1,
                 "ewma_smoothed": 0,
                 "cusum_limit": 5,
