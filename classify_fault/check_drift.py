@@ -1,5 +1,8 @@
+import os
+import json
 import numpy as np
 from .utils.convert_type import numpy_to_python_type
+
 
 def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
     """Tabular CUSUM 알고리즘을 사용하여 CUSUM을 계산합니다.
@@ -40,10 +43,16 @@ def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
         raise ValueError("cusum_threshold는 양수이어야 합니다.")
     
     # CUSUM 알고리즘 수행
-    C_plus = max(0, C_plus + data_point - average - cusum_threshold)
-    C_minus = min(0, C_minus - data_point + average - cusum_threshold)
+    C_plus_ = max(0, C_plus + data_point - (average + cusum_threshold))
+    C_minus_ = min(0, C_minus + data_point - (average - cusum_threshold))
     
+    # CUSUM False 알람 최소화를 위한 추가 알고리즘
+    C_plus = C_plus_ if C_plus_ >= C_plus else 0
+    C_minus = C_minus_ if C_minus_ <= C_minus else 0
+    # print(C_plus, C_minus, data_point, average, 
+    #       cusum_threshold, C_minus + data_point - (average - cusum_threshold))
     return C_plus, C_minus
+
 
 
 def calculate_ewma(data_point, ewma_alpha, smoothed_data=None):
@@ -169,3 +178,46 @@ def detect_drift(data_point: float, average: float,
         result['EWMA'] = {'detected': detected, 'smoothed_data': smoothed_data}
 
     return result
+
+def update_drift_result(config_path: str, tag: str, drift_result: dict):
+    if tag is None:
+        return
+    # 파일이 존재하는지 확인
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"File '{config_path}' not found.")
+        
+    # tag 변수가 문자열인지 확인
+    if not isinstance(tag, str):
+        raise TypeError(f"Tag '{tag}' should be a string.")
+        
+    # drift_result 변수가 사전형(dict)인지 확인
+    if not isinstance(drift_result, dict):
+        raise TypeError("The 'drift_result' argument should be a dictionary.")
+        
+    # JSON 파일 로드
+    with open(config_path, "r") as f:
+        config = json.load(f)
+        
+    # tag가 JSON 파일에 있는지 확인
+    if tag not in config:
+        raise ValueError(f"Tag '{tag}' is not found in the configuration file.")
+        
+    # drift_params 딕셔너리 초기화
+    config[tag].setdefault('drift_params', {
+        "average": 0,
+        "cusum_threshold": 5,
+        "ewma_alpha": 0.1,
+        "ewma_smoothed": 0,
+        "cusum_limit": 10,
+        "cusum_plus": 0,
+        "cusum_minus": 0
+    })
+    
+    # drift_result 값을 drift_params 딕셔너리에 업데이트
+    config[tag]['drift_params']['cusum_plus'] = drift_result['cusum_plus']
+    config[tag]['drift_params']['cusum_minus'] = drift_result['cusum_minus']
+    config[tag]['drift_params']['ewma_smoothed'] = drift_result['ewma_smoothed']
+
+    # JSON 파일 저장
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=4)

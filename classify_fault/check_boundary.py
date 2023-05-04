@@ -32,7 +32,7 @@ def detect_out_of_bounds(x: float, high: Optional[float] = None, low: Optional[f
         # x 값이 하한 경계값보다 작으므로 하한을 초과합니다.
     """
     if (np.isnan(low) and np.isnan(high)) or (low is None and high is None):
-        return {"success": False, "result": "No Boundary"}
+        return {"success": False, "result": [None, None]}
 
     if low is None or np.isnan(low):
         clipped = np.clip(x, low, high)

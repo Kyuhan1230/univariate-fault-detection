@@ -8,7 +8,7 @@ from classify_fault.set_config import calculate_variables_config, save_config, l
 from classify_fault.fault_detection import detect_fault
 
 
-def test_fault_detection_with_config():
+def fault_detection_with_config_for_1_point():
     tag_list = ["Var1", "Var2"]
     data = np.array([
         [1, 10],
@@ -20,8 +20,8 @@ def test_fault_detection_with_config():
     ])
     variables_config = calculate_variables_config(tag_list, data)
 
-    save_config(variables_config, "./config/test_config.yaml")
-    loaded_config = load_config("./config/test_config.yaml")
+    save_config(variables_config, "./config/test_config.json")
+    loaded_config = load_config("./config/test_config.json")
 
     test_data = np.array([[5, 20]])
     
@@ -41,10 +41,10 @@ def test_fault_detection_with_config():
     assert result["Dynamics"]
     assert result["Drift"]==False
     # 파일 삭제
-    os.remove("./config/test_config.yaml")
+    os.remove("./config/test_config.json")
 
 
-def test_fault_detection():
+def fault_detection_for_1_point():
     data = np.array([1, 1.2, 1.3, 0.94, 1.05, 0.96, 5])
     type_to_check = {
         "frozen": True,
@@ -68,7 +68,7 @@ def test_fault_detection():
     assert result["Drift"] == False, f"Error occurred: {result}"
 
 
-def test_save_load_config():
+def save_load_config():
     tag_list = ["Var1", "Var2"]
     data = np.array([
         [1, 10],
@@ -80,21 +80,19 @@ def test_save_load_config():
     ])
     variables_config = calculate_variables_config(tag_list, data)
 
-    save_config(variables_config, "./config/test_config.yaml")
-    loaded_config = load_config("./config/test_config.yaml")
+    save_config(variables_config, "./config/test_config.json")
+    loaded_config = load_config("./config/test_config.json")
 
     assert variables_config == loaded_config
     # 파일 삭제
-    os.remove("./config/test_config.yaml")
+    os.remove("./config/test_config.json")
 
 if __name__ == "__main__":
-    test_save_load_config()
-    print("\033[43mtest_save_load_config: Done, Success\033[0m")
+    save_load_config()
+    print("\033[43mTest: Save Load Config - Success\033[0m")
 
-    test_fault_detection()
-    print("\033[43mtest_fault_detection: Done, Success\033[0m")
+    fault_detection_for_1_point()
+    print("\033[43mTest: Fault Detection for 1 point - Success\033[0m")
 
-    test_fault_detection_with_config()
-    print("\033[43mtest_fault_detection_with_config: Done, Success\033[0m")
-    
-    
+    fault_detection_with_config_for_1_point()
+    print("\033[43mTest: Fault Detection With Config for 1 point - Success\033[0m")
