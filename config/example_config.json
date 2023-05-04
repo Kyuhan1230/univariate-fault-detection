@@ -1,0 +1,39 @@
+{
+    "temp5": {
+        "tag_name": "temp5",
+        "type_to_check": {
+            "frozen": true,
+            "boundary": true,
+            "dynamics": true,
+            "drift": true
+        },
+        "frozen_threshold": 0.01,
+        "tracking_size": 5,
+        "boundary_limits": {
+            "high": 1234.4097135233396,
+            "low": 1149.3316598712859
+        },
+        "dynamic_threshold": 0.5,
+        "drift_params": {
+            "average": 1191.8706866973127,
+            "cusum_threshold": 35.44918902168899,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 1201.8335138275816,
+            "cusum_limit": 5,
+            "cusum_plus": 227628.64304371437,
+            "cusum_minus": 0
+        },
+        "statistic": {
+            "mean": 1191.8706866973127,
+            "std": 14.180011615964862,
+            "median": 1192.98,
+            "quantile1": 1183.84,
+            "quantile3": 1201.05,
+            "iqr": 17.210000000000036,
+            "min": 1126.27,
+            "max": 1243.11,
+            "oldest_value": 1220.54,
+            "data_size": 21101
+        }
+    }
+}
