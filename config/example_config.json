@@ -18,9 +18,9 @@
             "average": 1191.8706866973127,
             "cusum_threshold": 35.44918902168899,
             "ewma_alpha": 0.1,
-            "ewma_smoothed": 1201.8335138275816,
+            "ewma_smoothed": 1201.7632138275817,
             "cusum_limit": 5,
-            "cusum_plus": 227628.64304371437,
+            "cusum_plus": 63.4760822809983,
             "cusum_minus": 0
         },
         "statistic": {
