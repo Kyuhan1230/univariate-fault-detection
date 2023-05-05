@@ -38,12 +38,20 @@ def detect_bias(meas: List[float], pred: List[float], std_train: float, confiden
     
     if not valid_confidence_range[0] <= confidence <= valid_confidence_range[1]:
         raise ValueError(f"Confidence must be in the range of {valid_confidence_range}, but {confidence} was given.")
-        
+    
+    if isinstance(meas, np.ndarray):
+        meas = meas.ravel()
+    if isinstance(pred, np.ndarray):
+        pred = pred.ravel()
+
     cc = t.ppf(confidence, len(meas) - 1) * std_train
     direction = 1 if np.mean(meas) > np.mean(pred) else -1
     errors = abs(np.array(meas) - np.array(pred))
-    avg_error, last_error = round(float(np.mean(errors)), 5), round(float(errors[-1]), 3)
-    bias = avg_error if avg_error > cc and last_error > avg_error else 0
+    avg_error = round(float(np.mean(errors)), 5)
+    avg_error_ = round(abs(np.mean(meas) - np.mean(pred)), 5)
+    
+    if avg_error_ > cc:
+        bias = avg_error 
     return {"success": True, "result": [bool(bias), bias * direction]}
 
 
