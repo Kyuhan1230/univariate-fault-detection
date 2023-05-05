@@ -181,13 +181,12 @@ def load_config(json_file_path='./config/variable_config.json'):
     return data
 
 
-def determine_dynamic_threshold(data: List[float], window_size: int = 5, sensitivity: float = 1.5) -> float:
+def determine_dynamic_threshold(data: List[float], sensitivity: float = 1.5) -> float:
     """
     주어진 데이터를 바탕으로 동적 임계값을 결정합니다.
 
     Args:
         data (list): 안정상태를 검사할 이전 데이터의 리스트.
-        window_size (int): 관찰할 이전 데이터의 수.
         sensitivity (float): 동적 임계값 조절을 위한 감도 값.
 
     Returns:
@@ -202,14 +201,11 @@ def determine_dynamic_threshold(data: List[float], window_size: int = 5, sensiti
         print(f"Dynamic threshold: {dynamic_threshold}")
         # Dynamic threshold: 3.0
     """
-    if len(data) < window_size + 1:
-        raise ValueError("Data length should be at least window_size + 1.")
-
     data = np.array(data)
-    data = data[-window_size:]  # Consider only the last window_size data points
+    data_diff = np.diff(data)  # Calculate differences between consecutive elements
 
-    moving_average = np.mean(data)
-    moving_std = np.std(data)
+    moving_average = np.mean(data_diff)
+    moving_std = np.std(data_diff)
 
     dynamic_threshold = moving_average + (moving_std * sensitivity)
 
