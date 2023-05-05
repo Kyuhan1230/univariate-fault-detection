@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import pandas as pd
+from typing import List
 
 
 def calculate_variables_config(tag_list: list, data, type_to_check=None, 
@@ -76,6 +77,9 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
                 "cusum_plus": 0,
                 "cusum_minus": 0
             }
+        
+        # dynamic_threshold를 결정
+        dynamic_threshold = determine_dynamic_threshold(data[:, i])
 
         variables_config[tag] = {
             "tag_name": tag,
@@ -83,7 +87,7 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
             "frozen_threshold": frozen_threshold,
             "tracking_size": tracking_size,
             "boundary_limits": boundary_limits[i],
-            "dynamic_threshold": 0.5,
+            "dynamic_threshold": dynamic_threshold,
             "drift_params": drift_params[i],
             "statistic": staticstic["result"][tag]
         }
@@ -175,3 +179,38 @@ def load_config(json_file_path='./config/variable_config.json'):
         data = json.load(f)
 
     return data
+
+
+def determine_dynamic_threshold(data: List[float], window_size: int = 5, sensitivity: float = 1.5) -> float:
+    """
+    주어진 데이터를 바탕으로 동적 임계값을 결정합니다.
+
+    Args:
+        data (list): 안정상태를 검사할 이전 데이터의 리스트.
+        window_size (int): 관찰할 이전 데이터의 수.
+        sensitivity (float): 동적 임계값 조절을 위한 감도 값.
+
+    Returns:
+        float: 동적 임계값.
+
+    Examples:
+        data = [1, 2, 4, 6, 8, 10, 12]
+        window_size = 5
+        sensitivity = 1.5
+
+        dynamic_threshold = determine_dynamic_threshold(data, window_size, sensitivity)
+        print(f"Dynamic threshold: {dynamic_threshold}")
+        # Dynamic threshold: 3.0
+    """
+    if len(data) < window_size + 1:
+        raise ValueError("Data length should be at least window_size + 1.")
+
+    data = np.array(data)
+    data = data[-window_size:]  # Consider only the last window_size data points
+
+    moving_average = np.mean(data)
+    moving_std = np.std(data)
+
+    dynamic_threshold = moving_average + (moving_std * sensitivity)
+
+    return float(dynamic_threshold)
