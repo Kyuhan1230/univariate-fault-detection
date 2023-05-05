@@ -50,8 +50,21 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
         std = float(np.std(data[:, i]))
 
         if boundary_limits[i] is None:
-            boundary_limits[i] = {"high": mean + 3 * std, 
-                                  "low": mean - 3 * std}
+            sigma_multiplier = 3
+            while sigma_multiplier <= 6:
+                high_limit = mean + sigma_multiplier * std
+                low_limit = mean - sigma_multiplier * std
+                
+                within_limits = np.sum((data[:, i] >= low_limit) & (data[:, i] <= high_limit))
+                data_count = len(data[:, i])
+                confidence_percentage = within_limits / data_count
+                
+                if confidence_percentage >= 0.99:
+                    break
+                
+                sigma_multiplier += 0.5
+            
+            boundary_limits[i] = {"high": high_limit, "low": low_limit}
 
         if drift_params[i] is None:
             drift_params[i] = {
