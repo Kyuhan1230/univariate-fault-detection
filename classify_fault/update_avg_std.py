@@ -26,7 +26,7 @@ def update_avg_std(avg_old, std_old, new_value, update_option, oldest_value, dat
                 raise TypeError("Keep Size Option should has Initial Value.")
         else:
             option = 'increase'
-        # print("option", option)
+
     else:
         raise TypeError("Option should be string, one of 'Keep Size', 'Increase' ")
 
@@ -96,7 +96,16 @@ def update_std_sliding(std_old, avg_old, avg_new, new_value, oldest_value, data_
         float: The updated standard deviation.
         reference: https://nestedsoftware.com/2019/09/26/incremental-average-and-standard-deviation-with-sliding-window-470k.176143.html
     """
-    return sqrt(std_old ** 2 + (new_value - oldest_value) * (new_value + oldest_value - avg_new - avg_old) / data_size)
+    if data_size == 0:
+        raise ValueError("data_size cannot be zero")
+    inside_sqrt = (
+        std_old ** 2 + ((new_value - oldest_value) * (new_value + oldest_value - avg_new - avg_old)) / data_size
+    )
+
+    if inside_sqrt < 0:
+        return std_old
+
+    return sqrt(inside_sqrt)
 
 
 def update_std_incremental(std_old, avg_old, avg_new, new_value, data_size):
