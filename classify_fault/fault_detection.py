@@ -4,12 +4,14 @@ from classify_fault.check_drift import *
 from classify_fault.check_frozen import *
 from classify_fault.check_dynamics import *
 from classify_fault.utils.get_value_in_dict import get_value
+from classify_fault.set_config import *
 import traceback
 
 def detect_fault(data, tracking_size, type_to_check, 
                  frozen_threshold=None, boundary_limits=None, 
                  dynamic_threshold=None, drift_params=None,
-                 tag=None, config_path='./config/variable_config.json'):
+                 tag=None, config_path='./config/variable_config.json', 
+                 boundary_type='fix'):
     """
     변수 유형을 확인하고, 각 유형의 장애를 감지하는 함수입니다.
     
@@ -66,6 +68,7 @@ def detect_fault(data, tracking_size, type_to_check,
                 fault_detected = True
 
         # 2. Boundary Test
+        statistics_update = None
         if type_to_check.get("boundary"):
             x = data[-1]  # 가장 최근 데이터
             high, low = boundary_limits['high'], boundary_limits['low']
@@ -75,6 +78,17 @@ def detect_fault(data, tracking_size, type_to_check,
             values['boundary'] = result['result']
             if boundary_detected:
                 fault_detected = True
+        else:
+            if 'fix' not in boundary_type.lower():
+                statistics_update, boundary_limits_update = {}, {}
+                # JSON 파일 로드
+                with open(config_path, "r") as f:
+                    config = json.load(f)
+                statistics = config[tag]['statistics']
+                boundary_limits_update['high'], boundary_limits_update['low'] = set_boundary(statistics=statistics, x=data[-1], boundary_type='moving')['result']
+                statistics_update['max'], statistics_update['min'] = max(data, statistics['max']), min(data, statistics['min'])
+                statistics_update['oldest_value'] = data[0]
+
 
         # 3. Dynamic Test
         if type_to_check.get("dynamics"):
@@ -95,18 +109,23 @@ def detect_fault(data, tracking_size, type_to_check,
             cusum_plus=get_value(dictionary=result['CUSUM'], key='C_plus', default_value=0)
             cusum_minus=get_value(dictionary=result['CUSUM'], key='C_minus', default_value=0)
             ewma_smoothed=get_value(dictionary=result['EWMA'], key='smoothed_data', default_value=0)
-            update_drift_result(config_path=config_path, 
-                                tag=tag,
-                                drift_result={"cusum_plus": cusum_plus, 
-                                                "cusum_minus": cusum_minus,
-                                                "ewma_smoothed": ewma_smoothed})
+            
+            drift_params_update = {"cusum_plus": cusum_plus, 
+                                   "cusum_minus": cusum_minus,
+                                   "ewma_smoothed": ewma_smoothed}
             # Update Values Dictionary
             values['drift'] = [cusum_plus, cusum_minus]
             # if result["CUSUM"]["detected"] or result["EWMA"]["detected"]:
             if result["CUSUM"]["detected"]:
                 drift_detected = True
                 fault_detected = True
-        
+        else:
+            drift_params_update = None
+
+        # 5. Update Configuration, update_config 함수 내에서 I/O 작업 최적화 (전체 config 전달)
+        update_config(config=config, config_path=config_path, tag=tag, 
+                      drift_params=drift_params_update, statistic=statistics_update, boundary_limits=boundary_limits_update)
+
         success = True
         message = "-"
     except Exception as E:
