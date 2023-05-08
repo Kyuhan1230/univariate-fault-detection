@@ -10,30 +10,31 @@
         "frozen_threshold": 0.01,
         "tracking_size": 5,
         "boundary_limits": {
-            "high": 1234.4097135233396,
-            "low": 1149.3316598712859
+            "high": 1276.6626951821042,
+            "low": 1173.8884242125189
         },
-        "dynamic_threshold": 0.5,
+        "dynamic_threshold": 11.861676080530238,
         "drift_params": {
             "average": 1191.8706866973127,
-            "cusum_threshold": 35.44918902168899,
+            "cusum_threshold": 35.45002903991215,
             "ewma_alpha": 0.1,
-            "ewma_smoothed": 1201.7632138275817,
+            "ewma_smoothed": 0,
             "cusum_limit": 5,
-            "cusum_plus": 63.4760822809983,
+            "cusum_plus": 0,
             "cusum_minus": 0
         },
         "statistic": {
-            "mean": 1191.8706866973127,
-            "std": 14.180011615964862,
+            "mean": 1225.2755596973116,
+            "std": 34.25809032319516,
             "median": 1192.98,
             "quantile1": 1183.84,
             "quantile3": 1201.05,
             "iqr": 17.210000000000036,
             "min": 1126.27,
-            "max": 1243.11,
-            "oldest_value": 1220.54,
-            "data_size": 21101
+            "max": 1269.036873,
+            "oldest_value": 1234.366873,
+            "tracking_size": 5,
+            "boundary_type": "fix"
         }
     }
 }
