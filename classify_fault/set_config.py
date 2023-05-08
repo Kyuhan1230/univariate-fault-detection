@@ -1,3 +1,4 @@
+import os
 import json
 import numpy as np
 import pandas as pd
@@ -6,7 +7,8 @@ from typing import List
 
 def calculate_variables_config(tag_list: list, data, type_to_check=None, 
                                frozen_threshold=0.01, tracking_size=5, 
-                               boundary_limits=None, drift_params=None):
+                               boundary_limits=None, drift_params=None,
+                               boundary_type='Fix'):
     """
     주어진 데이터를 바탕으로 변수 설정값을 계산합니다.
     
@@ -41,31 +43,19 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
     if drift_params is None:
         drift_params = [None] * len(tag_list)
 
-    staticstic = get_statistics(data=data, columns_list=tag_list)
+    staticstic = get_statistics(data=data, columns_list=tag_list, tracking_size=tracking_size)
     if staticstic['success'] is False:
         raise ValueError("Can't Calcualte Statistic. Something is wrong.")
 
     variables_config = {}
     for i, tag in enumerate(tag_list):
-        mean = float(np.mean(data[:, i]))
-        std = float(np.std(data[:, i]))
+        mean = float(staticstic["result"][tag]['mean'])
+        std = float(staticstic["result"][tag]['std'])
 
         if boundary_limits[i] is None:
-            sigma_multiplier = 3
-            while sigma_multiplier <= 6:
-                high_limit = mean + sigma_multiplier * std
-                low_limit = mean - sigma_multiplier * std
-                
-                within_limits = np.sum((data[:, i] >= low_limit) & (data[:, i] <= high_limit))
-                data_count = len(data[:, i])
-                confidence_percentage = within_limits / data_count
-                
-                if confidence_percentage >= 0.99:
-                    break
-                
-                sigma_multiplier += 0.5
-            
-            boundary_limits[i] = {"high": high_limit, "low": low_limit}
+            boundary_res = set_boundary(statistics=staticstic['result'][tag], x=float(data[-1, i]), 
+                                        boundary_type=boundary_type, data=data[:, i].ravel())
+            boundary_limits[i] = {"high": boundary_res['result'][0], "low": boundary_res['result'][1]}
 
         if drift_params[i] is None:
             drift_params[i] = {
@@ -95,7 +85,7 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
     return variables_config
 
 
-def get_statistics(data, columns_list=None):
+def get_statistics(data, columns_list=None, tracking_size=5):
     """
     주어진 데이터를 바탕으로 데이터의 통계치 dictionary를 완성합니다.
     
@@ -140,11 +130,10 @@ def get_statistics(data, columns_list=None):
         min_val = float(np.min(column_data))
         max_val = float(np.max(column_data))
         oldest_value = float(column_data[0])
-        data_size = int(column_data.size)
 
         statistics[column_name] = {"mean": mean, "std": std, "median": median, "quantile1": q1, "quantile3": q3,
                                     "iqr": iqr, "min": min_val, "max": max_val, "oldest_value": oldest_value,
-                                    "data_size": data_size}
+                                    "tracking_size": tracking_size, 'boundary_type': 'fix'}
     return {"success": True, "result": statistics}
 
 
@@ -210,3 +199,169 @@ def determine_dynamic_threshold(data: List[float], sensitivity: float = 1.5) -> 
     dynamic_threshold = moving_average + (moving_std * sensitivity)
 
     return float(dynamic_threshold)
+
+def set_boundary(statistics, x=None, boundary_type='fix', data=None):
+    """
+    주어진 통계 정보와 경계 유형, 입력값, 시그마 레벨, 태그 이름을 사용하여 경계 값을 계산합니다.
+    
+    Args:
+        statistics (dict): 통계 정보를 저장하는 딕셔너리
+        x (float): 현재 데이터
+        sigma_level (float): 시그마 레벨
+        boundary_type (str): 경계 유형을 뜻하는 문자열, 기본 값: 'fix'
+        data (ndarray): 시계열 데이터, 기본 값: None
+    
+    Returns:
+        dict: 경계 값을 담은 딕셔너리
+            - success (bool): 함수 실행 결과를 나타내는 값입니다. 경계 값을 계산할 수 있으면 True를 반환
+            - result (list): 경계 값을 담은 리스트입니다. 계산에 실패하면 None을 반환
+    """        
+    # boundary_type 인자가 문자열 타입인지 확인
+    if not isinstance(boundary_type, str):
+        raise TypeError("The 'boundary_type' argument must be a string.")
+    
+    valid_boundary_types = ["moving", "fix"]
+    boundary_type = boundary_type.lower().replace(" ", "_")
+
+    if boundary_type not in valid_boundary_types:
+        raise ValueError(f"Invalid boundary type: {boundary_type}. Valid values should has {valid_boundary_types}.")
+    
+    # Statistics 인자가 딕셔너리 타입인지 확인
+    if not isinstance(statistics, dict):
+        raise TypeError("The 'statistics' argument must be a dictionary.")
+    
+    # Statistics 인자 내 mean, std 값 추출
+    mean, std = statistics['mean'], statistics['std']
+
+    # 4. 경계 값 계산
+    if 'fix' in boundary_type:
+        if data is None:
+            raise ValueError("For 'fix' bounds, the data argument must be entered.")
+        if not isinstance(data, np.ndarray) or (data.ndim > 1):
+            raise TypeError("The 'data' arguement must be 1d ndarray.")
+        
+        sigma_levels = np.arange(3, 6.5, 0.5)
+        high_limits = mean + sigma_levels * std
+        low_limits = mean - sigma_levels * std
+        
+        within_limits = np.sum((data[:, None] >= low_limits) & (data[:, None] <= high_limits), axis=0)
+        data_count = len(data)
+        confidence_percentages = within_limits / data_count
+
+        best_index = np.argmax(confidence_percentages >= 0.99)
+        best_sigma_level = sigma_levels[best_index]
+        
+        high = mean + best_sigma_level * std
+        low = mean - best_sigma_level * std
+        return {"result": [high, low, mean, std]}
+
+    else:    # "moving" in boundary_type
+        # x 인자가 실수 타입인지 확인
+        if x is None or not isinstance(x, float):
+            raise TypeError("The 'x' argument representing the current value must be floating point.")
+
+        try:
+            from classify_fault.update_avg_std import update_avg_std
+        except ImportError:
+            raise ImportError("The 'update_avg_std' function is required but could not be imported.")
+        avg_old = mean
+        std_old = std
+        update_option = 'Keep Size'
+        oldest_value = statistics['oldest_value']
+        data_size = statistics['tracking_size']
+
+        avg_updated, std_updated = update_avg_std(avg_old=avg_old, std_old=std_old, new_value=x, 
+                                                  update_option=update_option, 
+                                                  oldest_value=oldest_value, data_size=data_size)
+
+        statistics['mean'] = avg_updated
+        statistics['std'] = std_updated
+        
+        high = avg_updated + 1.5 * std_updated
+        low = avg_updated - 1.5 * std_updated
+        return {"result": [high, low, avg_updated, std_updated]}
+    
+
+def update_config(config_path: str, tag: str, config=None, drift_params: dict=None, statistic: dict=None, boundary_limits: dict=None):
+    """주어진 config 파일 내의 특정 tag의 drift_params와 statistic을 업데이트하고 저장합니다.
+
+    Args:
+        config_path (str): JSON 파일 경로
+        tag (str): 업데이트할 대상 tag 이름
+        drift_params (dict): 업데이트할 drift_params 값들이 포함된 딕셔너리
+        statistic (dict): 업데이트할 statistic 값들이 포함된 딕셔너리
+
+    Raises:
+        FileNotFoundError: 파일이 존재하지 않는 경우
+        TypeError: tag가 문자열이 아닌 경우 또는 config 파일이 JSON 형식이 아닌 경우
+        ValueError: tag가 config 파일에 존재하지 않는 경우
+
+    """
+    if tag is None:
+        print('tag is None')
+        return 
+
+    # tag가 문자열인지 확인
+    if not isinstance(tag, str):
+        raise TypeError(f"Tag '{tag}' should be a string.")
+        
+    # 파일 타입이 json인지 확인
+    if not config_path.endswith('.json'):
+        raise TypeError("Currently only JSON configuration can be updated and other data types require separate update.")
+
+    # Config JSON 파일 로드
+    if config is None:
+        with open(config_path, "r") as f:
+            config = json.load(f)
+        
+    # tag가 JSON 파일에 있는지 확인
+    if tag not in config:
+        raise ValueError(f"Tag '{tag}' is not found in the configuration file.")
+        
+    # drift_result 값을 drift_params 딕셔너리에 업데이트
+    if drift_params is not None:
+        # drift_params와 statistic 딕셔너리 초기화
+        config[tag].setdefault('drift_params', {
+            "average": 0,
+            "cusum_threshold": 5,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 0,
+            "cusum_limit": 10,
+            "cusum_plus": 0,
+            "cusum_minus": 0
+        })
+        config[tag]['drift_params']['cusum_plus'] = drift_params['cusum_plus']
+        config[tag]['drift_params']['cusum_minus'] = drift_params['cusum_minus']
+        config[tag]['drift_params']['ewma_smoothed'] = drift_params['ewma_smoothed']
+    
+    # statistic 값을 statistic 딕셔너리에 업데이트
+    if statistic is not None:
+        config[tag].setdefault('statistic', {
+        "mean": 0,
+        "std": 0,
+        "median": 0,
+        "quantile1": 0,
+        "quantile3": 0,
+        "iqr": 0,
+        "min": 0,
+        "max": 0,
+        "oldest_value": 0,
+        "tracking_size": 0
+        })
+        config[tag]['statistic']['mean'] = statistic['mean']
+        config[tag]['statistic']['std'] = statistic['std']
+        config[tag]['statistic']['min'] = statistic['min']
+        config[tag]['statistic']['max'] = statistic['max']
+        config[tag]['statistic']['oldest_value'] = statistic['oldest_value']
+    
+    # boundary_limits 값을 boundary_limits 딕셔너리에 업데이트
+    if boundary_limits is not None:
+        config[tag].setdefault('boundary_limits', {
+        "high": 0,
+        "low": 0,
+        })
+        config[tag]['boundary_limits']['high'] = boundary_limits['high']
+        config[tag]['boundary_limits']['low'] = boundary_limits['low']
+    # JSON 파일 저장
+    with open(config_path, "w") as f:
+        json.dump(config, f, indent=4)
