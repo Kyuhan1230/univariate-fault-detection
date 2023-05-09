@@ -20,3 +20,6 @@ eggs/
 .vscode/
 *.sqlite3
 *.pyc
+
+# File
+.config/example_config.json

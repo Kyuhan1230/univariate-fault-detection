@@ -51,7 +51,9 @@ def detect_bias(meas: List[float], pred: List[float], std_train: float, confiden
     avg_error_ = round(abs(np.mean(meas) - np.mean(pred)), 5)
     
     if avg_error_ > cc:
-        bias = avg_error 
+        bias = avg_error
+    else:
+        bias = 0
     return {"success": True, "result": [bool(bias), bias * direction]}
 
 
