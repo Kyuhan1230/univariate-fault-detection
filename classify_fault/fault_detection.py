@@ -1,13 +1,12 @@
-from classify_fault.bias_monitoring import *
-from classify_fault.check_boundary import *
-from classify_fault.check_drift import *
-from classify_fault.check_frozen import *
-from classify_fault.check_dynamics import *
+import json, traceback
+from classify_fault.check_boundary import detect_out_of_bounds
+from classify_fault.check_drift import detect_drift
+from classify_fault.check_frozen import detect_frozen
+from classify_fault.check_dynamics import detect_dynamics
 from classify_fault.utils.get_value_in_dict import get_value
-from classify_fault.set_config import *
-import traceback
+from classify_fault.set_config import update_config, set_boundary
 
-def detect_fault(data, tracking_size, type_to_check, 
+def detect_fault(data, tracking_size, type_to_check=None, 
                  frozen_threshold=None, boundary_limits=None, 
                  dynamic_threshold=None, drift_params=None,
                  tag=None, config_path='./config/variable_config.json', 
@@ -59,16 +58,21 @@ def detect_fault(data, tracking_size, type_to_check,
     fault_detected = False
     values = {"frozen": None, "boundary": None, "dynamics": None, "drift": None}
     frozen_detected, boundary_detected, dynamic_detected, drift_detected = False, False, False, False
+
+    if type_to_check is None:
+        type_to_check = {"frozen": True, "boundary": True, "dynamics": True, "drift": True}
+
     try:
-        # 1. Frozen Test
+        # Frozen Test
         if type_to_check.get("frozen"):
             frozen_detected, avg_diff = detect_frozen(data, frozen_threshold, tracking_size)
             values['frozen'] = avg_diff
             if frozen_detected:
                 fault_detected = True
 
-        # 2. Boundary Test
+        # Boundary Test
         statistics_update = None
+        boundary_limits_update = None
         if type_to_check.get("boundary"):
             x = data[-1]  # 가장 최근 데이터
             high, low = boundary_limits['high'], boundary_limits['low']
@@ -89,27 +93,27 @@ def detect_fault(data, tracking_size, type_to_check,
                 statistics_update['max'], statistics_update['min'] = max(data, statistics['max']), min(data, statistics['min'])
                 statistics_update['oldest_value'] = data[0]
 
-
-        # 3. Dynamic Test
+        # Dynamic Test
         if type_to_check.get("dynamics"):
             dynamic_detected, avg_diff = detect_dynamics(data=data, dynamic_threshold=dynamic_threshold)
             values['dynamics'] = avg_diff
             if dynamic_detected:
                 fault_detected = True
 
-        # 4. Drift Test
+        # Drift Test
         if type_to_check.get("drift"):
             data_point = data[-1]  # 가장 최근 데이터
             average, cusum_threshold, ewma_alpha = drift_params['average'], drift_params['cusum_threshold'], drift_params['ewma_alpha']
+           
             cusum_plus_init = get_value(dictionary=drift_params, key='cusum_plus', default_value=0)
             cusum_minus_init = get_value(dictionary=drift_params, key='cusum_minus', default_value=0)
             result = detect_drift(data_point=data_point, average=average, cusum_threshold=cusum_threshold, ewma_alpha=ewma_alpha,
                                   C_plus=cusum_plus_init, C_minus=cusum_minus_init)
-            # Update Drift History
+
             cusum_plus=get_value(dictionary=result['CUSUM'], key='C_plus', default_value=0)
             cusum_minus=get_value(dictionary=result['CUSUM'], key='C_minus', default_value=0)
             ewma_smoothed=get_value(dictionary=result['EWMA'], key='smoothed_data', default_value=0)
-            
+
             drift_params_update = {"cusum_plus": cusum_plus, 
                                    "cusum_minus": cusum_minus,
                                    "ewma_smoothed": ewma_smoothed}
@@ -122,8 +126,8 @@ def detect_fault(data, tracking_size, type_to_check,
         else:
             drift_params_update = None
 
-        # 5. Update Configuration, update_config 함수 내에서 I/O 작업 최적화 (전체 config 전달)
-        update_config(config=config, config_path=config_path, tag=tag, 
+        # Update Configuration
+        update_config(config_path=config_path, tag=tag, 
                       drift_params=drift_params_update, statistic=statistics_update, boundary_limits=boundary_limits_update)
 
         success = True
@@ -136,4 +140,4 @@ def detect_fault(data, tracking_size, type_to_check,
               "Frozen": frozen_detected, "Boundary": boundary_detected, "Dynamics": dynamic_detected, "Drift": drift_detected,
               "message": message, "values": values}
     
-    return result
+    return result  
