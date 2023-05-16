@@ -41,9 +41,9 @@ Development of sensor validation methodologies for structural health monitoring:
 	- Shewahrt 관리도를 응용한 것으로, 데이터의 <strong><u>이동 평균과 이동 표준 편차</strong></u>를 기준으로 상한선과 하한선을 설정하여 공정 내 비정상적인 변동을 신속하게 감지합니다.
     - <strong><u>이동 평균과 이동 표준 편차</strong></u>를 이용하여 경계를 산출했기 때문에 기존의 Shewahrt 관리도보다 엄격한 모니터링을 할 수 있습니다.
     - 이동 평균과 표준편차는 아래의 수식으로 설정합니다.
-        <p align="center">
+        <p align="left">
 
-        <img src='./data/moving_window.png' height="200">
+        <img src='./data/moving_window.png' height="100">
         <img src='./data/moving_average.png' height="50">
         <img src='./data/moving_std.png' height="50">
         https://nestedsoftware.com/2019/09/26/incremental-average-and-standard-deviation-with-sliding-window-470k.176143.html
