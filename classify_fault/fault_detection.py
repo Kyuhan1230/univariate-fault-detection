@@ -62,6 +62,9 @@ def detect_fault(data, tracking_size, type_to_check=None,
     if type_to_check is None:
         type_to_check = {"frozen": True, "boundary": True, "dynamics": True, "drift": True}
 
+    if tracking_size == 0:
+        type_to_check = {"frozen": False, "boundary": True, "dynamics": False, "drift": True}
+
     try:
         # Frozen Test
         if type_to_check.get("frozen"):
@@ -96,6 +99,7 @@ def detect_fault(data, tracking_size, type_to_check=None,
                 statistics_update['std'] = std_updated
                 statistics_update['max'], statistics_update['min'] = max(max(data), statistics['max']), min(min(data), statistics['min'])
                 statistics_update['oldest_value'] = data[0]
+                statistics_update['boundary_type'] = 'moving'
 
         # Dynamic Test
         if type_to_check.get("dynamics"):
