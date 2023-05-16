@@ -82,15 +82,19 @@ def detect_fault(data, tracking_size, type_to_check=None,
             values['boundary'] = result['result']
             if boundary_detected:
                 fault_detected = True
-        else:
-            if 'fix' not in boundary_type.lower():
+
+            if 'moving' in boundary_type.lower():
                 statistics_update, boundary_limits_update = {}, {}
                 # JSON 파일 로드
                 with open(config_path, "r") as f:
                     config = json.load(f)
-                statistics = config[tag]['statistics']
-                boundary_limits_update['high'], boundary_limits_update['low'] = set_boundary(statistics=statistics, x=data[-1], boundary_type='moving')['result']
-                statistics_update['max'], statistics_update['min'] = max(data, statistics['max']), min(data, statistics['min'])
+                statistics = config[tag]['statistic']
+                high_updated, low_updated, avg_updated, std_updated = set_boundary(statistics=statistics, x=data[-1], boundary_type='moving')['result']
+                boundary_limits_update['high'] = high_updated
+                boundary_limits_update['low'] = low_updated
+                statistics_update['mean'] = avg_updated
+                statistics_update['std'] = std_updated
+                statistics_update['max'], statistics_update['min'] = max(max(data), statistics['max']), min(min(data), statistics['min'])
                 statistics_update['oldest_value'] = data[0]
 
         # Dynamic Test
