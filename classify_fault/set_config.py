@@ -146,7 +146,7 @@ def save_config(data, json_file_path='./config/variable_config.json'):
         json_file_path (str, optional): 저장할 JSON 파일 경로, default는 './config/variable_config.json'
     """
     # JSON 형식으로 변환합니다.
-    json_data = json.dumps(data, indent=4)
+    json_data = json.dumps(data, indent=4, ensure_ascii=False)
 
     # 파일로 저장합니다.
     with open(json_file_path, 'w') as f:
@@ -164,7 +164,7 @@ def load_config(json_file_path='./config/variable_config.json'):
         dict: 변수 설정값을 담고 있는 딕셔너리
     """
     # JSON 파일을 읽어와 딕셔너리로 변환합니다.
-    with open(json_file_path, 'r') as f:
+    with open(json_file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
     return data
@@ -311,7 +311,7 @@ def update_config(config_path: str, tag: str, config=None, drift_params: dict=No
 
     # Config JSON 파일 로드
     if config is None:
-        with open(config_path, "r") as f:
+        with open(config_path, "r", encoding='utf-8') as f:
             config = json.load(f)
         
     # tag가 JSON 파일에 있는지 확인
@@ -363,5 +363,5 @@ def update_config(config_path: str, tag: str, config=None, drift_params: dict=No
         config[tag]['boundary_limits']['high'] = boundary_limits['high']
         config[tag]['boundary_limits']['low'] = boundary_limits['low']
     # JSON 파일 저장
-    with open(config_path, "w") as f:
-        json.dump(config, f, indent=4)
+    with open(config_path, "w", encoding='utf-8') as f:
+        json.dump(config, f, ensure_ascii=False, indent=4)
