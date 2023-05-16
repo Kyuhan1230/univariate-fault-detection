@@ -346,13 +346,15 @@ def update_config(config_path: str, tag: str, config=None, drift_params: dict=No
         "min": 0,
         "max": 0,
         "oldest_value": 0,
-        "tracking_size": 0
+        "tracking_size": 0,
+        "boundary_type": "fix"
         })
         config[tag]['statistic']['mean'] = statistic['mean']
         config[tag]['statistic']['std'] = statistic['std']
         config[tag]['statistic']['min'] = statistic['min']
         config[tag]['statistic']['max'] = statistic['max']
         config[tag]['statistic']['oldest_value'] = statistic['oldest_value']
+        config[tag]['statistic']['boundary_type'] = statistic['boundary_type']
     
     # boundary_limits 값을 boundary_limits 딕셔너리에 업데이트
     if boundary_limits is not None:
