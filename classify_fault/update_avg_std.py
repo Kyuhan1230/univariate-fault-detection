@@ -63,7 +63,7 @@ def update_average_sliding(average, new_value, oldest_value, data_size):
         float: The updated average.
 
     """
-    return (data_size * average - oldest_value + new_value) / data_size
+    return float((data_size * average - oldest_value + new_value) / data_size)
 
 
 def update_average_incremental(average, new_value, data_size):
@@ -78,7 +78,7 @@ def update_average_incremental(average, new_value, data_size):
         float: The updated average.
 
     """
-    return (data_size * average + new_value) / (data_size + 1)
+    return float((data_size * average + new_value) / (data_size + 1))
 
 
 def update_std_sliding(std_old, avg_old, avg_new, new_value, oldest_value, data_size):
@@ -105,7 +105,7 @@ def update_std_sliding(std_old, avg_old, avg_new, new_value, oldest_value, data_
     if inside_sqrt < 0:
         return std_old
 
-    return sqrt(inside_sqrt)
+    return float(sqrt(inside_sqrt))
 
 
 def update_std_incremental(std_old, avg_old, avg_new, new_value, data_size):
@@ -122,4 +122,4 @@ def update_std_incremental(std_old, avg_old, avg_new, new_value, data_size):
         float: The updated standard deviation.
         reference: https://www.physicsforums.com/threads/updating-the-mean-and-sd-of-a-set-efficiently.526280/
     """
-    return sqrt((std_old ** 2 * data_size + (new_value - avg_new) * (new_value - avg_old)) / (data_size + 1))
+    return float(sqrt((std_old ** 2 * data_size + (new_value - avg_new) * (new_value - avg_old)) / (data_size + 1)))

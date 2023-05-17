@@ -133,7 +133,9 @@ def perform_fault_detection(data, tracking_size, config=None,
             if 'moving' in boundary_type.lower():
                 statistics_update, boundary_limits_update = {}, {}
                 statistics = config[tag]['statistic']
-                high_updated, low_updated, avg_updated, std_updated = set_boundary(statistics=statistics, x=data[-1], boundary_type='moving')['result']
+                high_updated, low_updated, avg_updated, std_updated, tracked_size = set_boundary(statistics=statistics, 
+                                                                                                 x=data[-1], 
+                                                                                                 boundary_type='moving')['result']
                 boundary_limits_update['high'] = high_updated
                 boundary_limits_update['low'] = low_updated
                 statistics_update['mean'] = avg_updated
@@ -141,6 +143,7 @@ def perform_fault_detection(data, tracking_size, config=None,
                 statistics_update['max'], statistics_update['min'] = max(max(data), statistics['max']), min(min(data), statistics['min'])
                 statistics_update['oldest_value'] = data[0]
                 statistics_update['boundary_type'] = 'moving'
+                statistics_update['tracked_size'] = tracked_size
 
         # Dynamic Test
         if type_to_check.get("dynamics"):

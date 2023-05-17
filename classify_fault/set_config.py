@@ -133,7 +133,8 @@ def get_statistics(data, columns_list=None, tracking_size=5):
 
         statistics[column_name] = {"mean": mean, "std": std, "median": median, "quantile1": q1, "quantile3": q3,
                                     "iqr": iqr, "min": min_val, "max": max_val, "oldest_value": oldest_value,
-                                    "tracking_size": tracking_size, 'boundary_type': 'fix'}
+                                    "tracking_size": tracking_size, 'boundary_type': 'fix', 'tracked_size': 1,
+                                    'sigma_level': 3}
     return {"success": True, "result": statistics}
 
 
@@ -248,6 +249,7 @@ def set_boundary(statistics, x=None, boundary_type='fix', data=None):
     
     # Statistics 인자 내 mean, std 값 추출
     mean, std = statistics['mean'], statistics['std']
+    sigma_levels = statistics['sigma_level']
 
     # 4. 경계 값 계산
     if 'fix' in boundary_type:
@@ -255,18 +257,19 @@ def set_boundary(statistics, x=None, boundary_type='fix', data=None):
             raise ValueError("For 'fix' bounds, the data argument must be entered.")
         if not isinstance(data, np.ndarray) or (data.ndim > 1):
             raise TypeError("The 'data' arguement must be 1d ndarray.")
-        
-        sigma_levels = np.arange(3, 6.5, 0.5)
-        high_limits = mean + sigma_levels * std
-        low_limits = mean - sigma_levels * std
-        
-        within_limits = np.sum((data[:, None] >= low_limits) & (data[:, None] <= high_limits), axis=0)
-        data_count = len(data)
-        confidence_percentages = within_limits / data_count
+        if sigma_levels is None:
+            sigma_levels = np.arange(3, 6.5, 0.5)
+            high_limits = mean + sigma_levels * std
+            low_limits = mean - sigma_levels * std
+            
+            within_limits = np.sum((data[:, None] >= low_limits) & (data[:, None] <= high_limits), axis=0)
+            data_count = len(data)
+            confidence_percentages = within_limits / data_count
 
-        best_index = np.argmax(confidence_percentages >= 0.99)
-        best_sigma_level = sigma_levels[best_index]
-        
+            best_index = np.argmax(confidence_percentages >= 0.99)
+            best_sigma_level = sigma_levels[best_index]
+        else:
+            best_sigma_level = sigma_levels
         high = mean + best_sigma_level * std
         low = mean - best_sigma_level * std
         return {"result": [high, low, mean, std]}
@@ -280,22 +283,35 @@ def set_boundary(statistics, x=None, boundary_type='fix', data=None):
             from classify_fault.update_avg_std import update_avg_std
         except ImportError:
             raise ImportError("The 'update_avg_std' function is required but could not be imported.")
-        avg_old = mean
-        std_old = std
-        update_option = 'Keep Size'
+        
+        avg_old, std_old = mean, std
+
         oldest_value = statistics['oldest_value']
-        data_size = statistics['tracking_size']
+        tracking_size = statistics['tracking_size']
+        tracked_size = statistics['tracked_size']
+
+        update_option = 'Increase' if tracked_size < tracking_size else 'Keep Size'
 
         avg_updated, std_updated = update_avg_std(avg_old=avg_old, std_old=std_old, new_value=x, 
                                                   update_option=update_option, 
-                                                  oldest_value=oldest_value, data_size=data_size)
+                                                  oldest_value=oldest_value, data_size=tracked_size)
 
         statistics['mean'] = avg_updated
         statistics['std'] = std_updated
         
-        high = avg_updated + 1.5 * std_updated
-        low = avg_updated - 1.5 * std_updated
-        return {"result": [high, low, avg_updated, std_updated]}
+        # moving임에도 불구하고, 지정 크기를 넘지 않으면 경계값은 업데이트 하지 않음(초기 고정값으로 업데이트 함.)
+        if tracked_size < tracking_size:
+            tracked_size += 1
+            high = mean + sigma_levels * std
+            low = mean - sigma_levels * std
+
+            return {"result": [high, low, avg_updated, std_updated, tracked_size]}
+        else:
+            high = avg_updated + sigma_levels * std_updated
+            low = avg_updated - sigma_levels * std_updated
+            tracked_size =  tracking_size    # tracked_size 조건 처리          
+
+            return {"result": [high, low, avg_updated, std_updated, tracked_size]}
     
 
 def update_config(config_path: str, updates: dict, config=None):
@@ -346,6 +362,7 @@ def update_config(config_path: str, updates: dict, config=None):
                                     "min": 0, "max": 0,
                                     "oldest_value": 0,
                                     "tracking_size": 0,
+                                    "tracked_size": 0,
                                     "boundary_type": "fix"
                                     })
             config[tag]['statistic']['mean'] = update['statistic']['mean']
@@ -354,6 +371,7 @@ def update_config(config_path: str, updates: dict, config=None):
             config[tag]['statistic']['max'] = update['statistic']['max']
             config[tag]['statistic']['oldest_value'] = update['statistic']['oldest_value']
             config[tag]['statistic']['boundary_type'] = update['statistic']['boundary_type']
+            config[tag]['statistic']['tracked_size'] = update['statistic']['tracked_size']
     
         # boundary_limits 값을 boundary_limits 딕셔너리에 업데이트
         if update.get('boundary_limits') is not None:

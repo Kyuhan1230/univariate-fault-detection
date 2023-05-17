@@ -6,7 +6,7 @@
 
 제조 공장에서 발생할 수 있는 고장 유형은 Bias, Drift, Noise, Frozen, Peak으로 구분할 수 있습니다.
 <p align="center">
-<img src='./data/fault_type_img.png' height="200"><br>
+<img src='./data/img/fault_type_img.png' height="200"><br>
 Development of sensor validation methodologies for structural health monitoring: a comprehensive review
 </p>
 
@@ -34,7 +34,7 @@ Development of sensor validation methodologies for structural health monitoring:
         <ul>𝐿𝑜𝑤𝑒𝑟 𝐶𝑜𝑛𝑡𝑟𝑜𝑙 𝐿𝑖𝑚𝑖𝑡(𝑈𝐶𝐿)=μ - 3𝜎 </ul>
         <p align="center">
 
-        <img src='./data/shewhart_control.png' height="200">
+        <img src='./data/img/shewhart_control.png' height="200">
         </p>
         <br>
 2. Moving Boundary
@@ -43,14 +43,14 @@ Development of sensor validation methodologies for structural health monitoring:
     - 이동 평균과 표준편차는 아래의 수식으로 설정합니다.
         <p align="left">
 
-        <img src='./data/moving_window.png' height="100">
-        <img src='./data/moving_average.png' height="50">
-        <img src='./data/moving_std.png' height="50">
+        <img src='./data/img/moving_window.png' height="100">
+        <img src='./data/img/moving_average.png' height="50">
+        <img src='./data/img/moving_std.png' height="50">
         https://nestedsoftware.com/2019/09/26/incremental-average-and-standard-deviation-with-sliding-window-470k.176143.html
         </p>
 
         <p align="center">
-        <img src='./data/moving_control_chart.png' height="200">
+        <img src='./data/img/moving_control_chart.png' height="200">
         </p>
         <br>
 3. Rate Of Change
@@ -63,11 +63,11 @@ Development of sensor validation methodologies for structural health monitoring:
     - $R_i$가 일정 값보다 작을 경우, Frozen으로 설정하고 일정 값 이상의 값을 갖을 경우 Noise/비정상 데이터로 감지할 수 있습니다.
         <p align="center">
 
-        <img src='./data/rate_of_change_frozen.png' height="200">
+        <img src='./data/img/rate_of_change_frozen.png' height="200">
         </p>
         <p align="center">
 
-        <img src='./data/rate_of_change_dynamic.png' height="200">
+        <img src='./data/img/rate_of_change_dynamic.png' height="200">
         </p>
         <br>
 4. CUSUM
@@ -83,7 +83,7 @@ Development of sensor validation methodologies for structural health monitoring:
         경계값, Control limit (H) $= h\sigma$<br>
 
         <p align="center">
-        <img src='./data/cusum_control.png' height="200">
+        <img src='./data/img/cusum_control.png' height="200">
         </p>
 <br>
 <br>
@@ -200,7 +200,7 @@ for i in tqdm(range(tracking_size, len(test_data))):
 
     detecteds.append(True if result else None)
 ```
-<img src='./data/example_result.png'>
+<img src='./data/img/example_result.png'>
 <br>
 <br>
 
