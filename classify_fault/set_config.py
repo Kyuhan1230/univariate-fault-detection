@@ -146,11 +146,16 @@ def save_config(data, json_file_path='./config/variable_config.json'):
         json_file_path (str, optional): 저장할 JSON 파일 경로, default는 './config/variable_config.json'
     """
     # JSON 형식으로 변환합니다.
-    json_data = json.dumps(data, indent=4, ensure_ascii=False)
-
+    json_data = json.dumps(data, indent=4, ensure_ascii=False)    
     # 파일로 저장합니다.
-    with open(json_file_path, 'w') as f:
-        f.write(json_data)
+    try:
+        with open(json_file_path, 'w') as f:
+            f.write(json_data)
+    except IOError as e:
+        raise IOError(f"Failed to write data to JSON file due to an I/O error (e.g. Disk full or no permission to write the file).\n {str(e)}")
+
+    except Exception as e:
+        print(f"Unexpected error: {e}")
 
 
 def load_config(json_file_path='./config/variable_config.json'):
@@ -163,10 +168,21 @@ def load_config(json_file_path='./config/variable_config.json'):
     Returns:
         dict: 변수 설정값을 담고 있는 딕셔너리
     """
-    # JSON 파일을 읽어와 딕셔너리로 변환합니다.
-    with open(json_file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
+    # 입력 파일 경로가 존재하는지 확인합니다.
+    if not os.path.exists(json_file_path):
+        raise FileNotFoundError(f"No such file or directory: '{json_file_path}'")
+    
+    # 입력 파일이 JSON 파일인지 확인합니다.
+    if not json_file_path.endswith('.json'):
+        raise ValueError(f"File '{json_file_path}' is not a JSON file")
+    
+    try:
+        # JSON 파일을 읽어와 딕셔너리로 변환합니다.
+        with open(json_file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception as e:
+        raise IOError(f"An error occurred while reading the file: {str(e)}")
+    
     return data
 
 
@@ -282,88 +298,68 @@ def set_boundary(statistics, x=None, boundary_type='fix', data=None):
         return {"result": [high, low, avg_updated, std_updated]}
     
 
-def update_config(config_path: str, tag: str, config=None, drift_params: dict=None, statistic: dict=None, boundary_limits: dict=None):
-    """주어진 config 파일 내의 특정 tag의 drift_params와 statistic을 업데이트하고 저장합니다.
+def update_config(config_path: str, updates: dict, config=None):
+    """
+    주어진 설정 파일에 대해 특정 태그의 drift_params, statistic, 그리고 boundary_limits를 업데이트하고 저장합니다.
+
+    이 함수는 파일 타입이 JSON인 경우에만 동작하며, 주어진 태그가 설정 파일에 존재하지 않으면 에러를 발생시킵니다.
+    또한, 업데이트할 내용이 'drift_params', 'statistic', 'boundary_limits' 딕셔너리에 포함되어 있어야 합니다.
 
     Args:
-        config_path (str): JSON 파일 경로
-        tag (str): 업데이트할 대상 tag 이름
-        drift_params (dict): 업데이트할 drift_params 값들이 포함된 딕셔너리
-        statistic (dict): 업데이트할 statistic 값들이 포함된 딕셔너리
+        config_path (str): 업데이트할 JSON 설정 파일의 경로.
+        updates (dict): 업데이트할 태그와 이에 해당하는 'drift_params', 'statistic', 'boundary_limits' 값들이 포함된 딕셔너리.
+        config (dict, optional): 기본 설정을 가진 딕셔너리. 기본값은 None입니다.
 
     Raises:
-        FileNotFoundError: 파일이 존재하지 않는 경우
-        TypeError: tag가 문자열이 아닌 경우 또는 config 파일이 JSON 형식이 아닌 경우
-        ValueError: tag가 config 파일에 존재하지 않는 경우
-
+        TypeError: 입력 파일이 JSON 형식이 아닌 경우.
+        ValueError: 입력한 태그가 설정 파일에 존재하지 않는 경우.
     """
-    if tag is None:
-        print('tag is None')
-        return 
-
-    # tag가 문자열인지 확인
-    if not isinstance(tag, str):
-        raise TypeError(f"Tag '{tag}' should be a string.")
-        
     # 파일 타입이 json인지 확인
     if not config_path.endswith('.json'):
         raise TypeError("Currently only JSON configuration can be updated and other data types require separate update.")
 
     # Config JSON 파일 로드
     if config is None:
-        with open(config_path, "r", encoding='utf-8') as f:
-            config = json.load(f)
-        
-    # tag가 JSON 파일에 있는지 확인
-    if tag not in config:
-        raise ValueError(f"Tag '{tag}' is not found in the configuration file.")
-        
-    # drift_result 값을 drift_params 딕셔너리에 업데이트
-    if drift_params is not None:
-        # drift_params와 statistic 딕셔너리 초기화
-        config[tag].setdefault('drift_params', {
-            "average": 0,
-            "cusum_threshold": 5,
-            "ewma_alpha": 0.1,
-            "ewma_smoothed": 0,
-            "cusum_limit": 10,
-            "cusum_plus": 0,
-            "cusum_minus": 0
-        })
-        config[tag]['drift_params']['cusum_plus'] = drift_params['cusum_plus']
-        config[tag]['drift_params']['cusum_minus'] = drift_params['cusum_minus']
-        config[tag]['drift_params']['ewma_smoothed'] = drift_params['ewma_smoothed']
+        config = load_config(json_file_path=config_path)
     
-    # statistic 값을 statistic 딕셔너리에 업데이트
-    if statistic is not None:
-        config[tag].setdefault('statistic', {
-        "mean": 0,
-        "std": 0,
-        "median": 0,
-        "quantile1": 0,
-        "quantile3": 0,
-        "iqr": 0,
-        "min": 0,
-        "max": 0,
-        "oldest_value": 0,
-        "tracking_size": 0,
-        "boundary_type": "fix"
-        })
-        config[tag]['statistic']['mean'] = statistic['mean']
-        config[tag]['statistic']['std'] = statistic['std']
-        config[tag]['statistic']['min'] = statistic['min']
-        config[tag]['statistic']['max'] = statistic['max']
-        config[tag]['statistic']['oldest_value'] = statistic['oldest_value']
-        config[tag]['statistic']['boundary_type'] = statistic['boundary_type']
+    for tag, update in updates.items():    
+        # tag가 JSON 파일에 있는지 확인
+        if tag not in config:
+            raise ValueError(f"Tag '{tag}' is not found in the configuration file.")
+        
+        # drift_result 값을 drift_params 딕셔너리에 업데이트
+        if update.get('drift_params') is not None:
+            config[tag].setdefault('drift_params', {
+                                    "average": 0,
+                                    "ewma_alpha": 0.1, "ewma_smoothed": 0,
+                                    "cusum_threshold": 5, "cusum_limit": 10,
+                                    "cusum_plus": 0, "cusum_minus": 0})
+            config[tag]['drift_params']['cusum_plus'] = update['drift_params']['cusum_plus']
+            config[tag]['drift_params']['cusum_minus'] = update['drift_params']['cusum_minus']
+            config[tag]['drift_params']['ewma_smoothed'] = update['drift_params']['ewma_smoothed']        
     
-    # boundary_limits 값을 boundary_limits 딕셔너리에 업데이트
-    if boundary_limits is not None:
-        config[tag].setdefault('boundary_limits', {
-        "high": 0,
-        "low": 0,
-        })
-        config[tag]['boundary_limits']['high'] = boundary_limits['high']
-        config[tag]['boundary_limits']['low'] = boundary_limits['low']
+        # statistic 값을 statistic 딕셔너리에 업데이트
+        if update.get('statistic') is not None:
+            config[tag].setdefault('statistic', {
+                                    "mean": 0, "std": 0, "median": 0,
+                                    "quantile1": 0, "quantile3": 0, "iqr": 0,
+                                    "min": 0, "max": 0,
+                                    "oldest_value": 0,
+                                    "tracking_size": 0,
+                                    "boundary_type": "fix"
+                                    })
+            config[tag]['statistic']['mean'] = update['statistic']['mean']
+            config[tag]['statistic']['std'] = update['statistic']['std']
+            config[tag]['statistic']['min'] = update['statistic']['min']
+            config[tag]['statistic']['max'] = update['statistic']['max']
+            config[tag]['statistic']['oldest_value'] = update['statistic']['oldest_value']
+            config[tag]['statistic']['boundary_type'] = update['statistic']['boundary_type']
+    
+        # boundary_limits 값을 boundary_limits 딕셔너리에 업데이트
+        if update.get('boundary_limits') is not None:
+            config[tag].setdefault('boundary_limits', { "high": 0, "low": 0})
+            config[tag]['boundary_limits']['high'] = update['boundary_limits']['high']
+            config[tag]['boundary_limits']['low'] = update['boundary_limits']['low']
+    
     # JSON 파일 저장
-    with open(config_path, "w", encoding='utf-8') as f:
-        json.dump(config, f, ensure_ascii=False, indent=4)
+    save_config(config, json_file_path=config_path)
