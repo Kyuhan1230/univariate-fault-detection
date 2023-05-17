@@ -5,7 +5,7 @@ import numpy as np
 sys.path.append(os.path.abspath('./'))
 
 from classify_fault.set_config import calculate_variables_config, save_config, load_config
-from classify_fault.fault_detection import detect_fault
+from classify_fault.fault_detection import detect_fault, detect_faults
 
 
 def fault_detection_with_config_for_1_point():
@@ -68,6 +68,36 @@ def fault_detection_for_1_point():
     assert result["Drift"] == False, f"Error occurred: {result}"
 
 
+def fault_detection_multiple_variable_with_config_for_1_point():
+    tag_list = ["Var1", "Var2"]
+    data = np.array([
+        [1, 10],
+        [1.2, 9],
+        [1.3, 11],
+        [0.94, 10],
+        [1.05, 12],
+        [0.96, 9]
+    ])
+    variables_config = calculate_variables_config(tag_list, data)
+
+    save_config(variables_config, "./config/test_config.json")
+
+    test_data = np.array([[5, 20]])
+    
+    data_to_test_ = np.concatenate((data, test_data), axis=0)
+    result = detect_faults(data=data_to_test_, tag_list=tag_list, config_path="./config/test_config.json")
+
+    for tag in tag_list:
+        assert result[tag]["success"], f"Error occurred: {result[tag]['message']}"
+        assert result[tag]["fault_detected"]
+        assert result[tag]["Frozen"]==False
+        assert result[tag]["Boundary"]
+        assert result[tag]["Dynamics"]
+        assert result[tag]["Drift"]==False
+    # 파일 삭제
+    os.remove("./config/test_config.json")
+
+
 def save_load_config():
     tag_list = ["Var1", "Var2"]
     data = np.array([
@@ -96,3 +126,6 @@ if __name__ == "__main__":
 
     fault_detection_with_config_for_1_point()
     print("\033[43mTest: Fault Detection With Config for 1 point - Success\033[0m")
+
+    fault_detection_multiple_variable_with_config_for_1_point()
+    print("\033[43mTest: Fault Detection Multiple Variables With Config for 1 point - Success\033[0m")
