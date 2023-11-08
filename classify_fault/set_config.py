@@ -1,9 +1,10 @@
 import os
-import json
+import ujson as json
 import numpy as np
 import pandas as pd
 from typing import List
 
+from functools import lru_cache
 
 def calculate_variables_config(tag_list: list, data, type_to_check=None, 
                                frozen_threshold=0.01, tracking_size=5, 
@@ -62,7 +63,7 @@ def calculate_variables_config(tag_list: list, data, type_to_check=None,
                 "average": mean,
                 "cusum_threshold": 5 * std * 1 / 2,
                 "ewma_alpha": 0.1,
-                "ewma_smoothed": 0,
+                "ewma_smoothed": mean,
                 "cusum_limit": 5,
                 "cusum_plus": 0,
                 "cusum_minus": 0
@@ -158,7 +159,7 @@ def save_config(data, json_file_path='./config/variable_config.json'):
     except Exception as e:
         print(f"Unexpected error: {e}")
 
-
+@lru_cache(maxsize=None)
 def load_config(json_file_path='./config/variable_config.json'):
     """
     주어진 JSON 파일을 로드합니다.
