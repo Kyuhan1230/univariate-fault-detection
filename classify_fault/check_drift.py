@@ -2,7 +2,7 @@ import os
 import json
 import numpy as np
 from .utils.convert_type import numpy_to_python_type
-
+from classify_fault.utils.check_run_time import elapsed
 
 def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
     """Tabular CUSUM 알고리즘을 사용하여 CUSUM을 계산합니다.
@@ -54,7 +54,6 @@ def calculate_cusum(data_point, average, cusum_threshold, C_plus=0, C_minus=0):
     return C_plus, C_minus
 
 
-
 def calculate_ewma(data_point, ewma_alpha, smoothed_data=None):
     """EWMA 알고리즘을 사용하여 입력값의 drift를 추적합니다.
 
@@ -92,7 +91,6 @@ def calculate_ewma(data_point, ewma_alpha, smoothed_data=None):
         smoothed_data = ewma_alpha * data_point + (1 - ewma_alpha) * smoothed_data
     
     return smoothed_data
-
 
 
 def detect_drift(data_point: float, average: float, 
@@ -179,45 +177,41 @@ def detect_drift(data_point: float, average: float,
 
     return result
 
-def update_drift_result(config_path: str, tag: str, drift_result: dict):
-    if tag is None:
-        return
-    # 파일이 존재하는지 확인
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"File '{config_path}' not found.")
-        
-    # tag 변수가 문자열인지 확인
-    if not isinstance(tag, str):
-        raise TypeError(f"Tag '{tag}' should be a string.")
-        
-    # drift_result 변수가 사전형(dict)인지 확인
-    if not isinstance(drift_result, dict):
-        raise TypeError("The 'drift_result' argument should be a dictionary.")
-        
-    # JSON 파일 로드
-    with open(config_path, "r") as f:
-        config = json.load(f)
-        
-    # tag가 JSON 파일에 있는지 확인
-    if tag not in config:
-        raise ValueError(f"Tag '{tag}' is not found in the configuration file.")
-        
-    # drift_params 딕셔너리 초기화
-    config[tag].setdefault('drift_params', {
-        "average": 0,
-        "cusum_threshold": 5,
-        "ewma_alpha": 0.1,
-        "ewma_smoothed": 0,
-        "cusum_limit": 10,
-        "cusum_plus": 0,
-        "cusum_minus": 0
-    })
-    
-    # drift_result 값을 drift_params 딕셔너리에 업데이트
-    config[tag]['drift_params']['cusum_plus'] = drift_result['cusum_plus']
-    config[tag]['drift_params']['cusum_minus'] = drift_result['cusum_minus']
-    config[tag]['drift_params']['ewma_smoothed'] = drift_result['ewma_smoothed']
+def detect_drift_vec(data_points: np.ndarray, averages: np.ndarray,
+                     cusum_thresholds=None, ewma_alphas=None,
+                     C_pluses=None, C_minuses=None, smoothed_data=None,
+                     cusum_limit=10):
 
-    # JSON 파일 저장
-    with open(config_path, "w") as f:
-        json.dump(config, f, indent=4)
+    if cusum_thresholds is None and ewma_alphas is None:
+        raise ValueError("At least one of cusum_thresholds and ewma_alphas must be provided.")
+
+    if C_pluses is None:
+        C_pluses = np.zeros_like(data_points)
+
+    if C_minuses is None:
+        C_minuses = np.zeros_like(data_points)
+
+    if smoothed_data is None:
+        smoothed_data = np.copy(averages)
+
+    result = {}
+
+    if cusum_thresholds is not None:
+        # Calculate CUSUM
+        C_pluses = np.maximum(0, data_points - averages - cusum_thresholds + C_pluses)
+        C_minuses = np.minimum(0, data_points - averages + cusum_thresholds + C_minuses)
+        # Detected Drift
+        detected = np.logical_or(C_pluses > cusum_limit, C_minuses < -cusum_limit)
+        result['CUSUM'] = {'detected': detected, 'C_plus': C_pluses, 'C_minus': C_minuses}
+
+    if ewma_alphas is not None:
+        # Calculate EWMA
+        smoothed_data = ewma_alphas * data_points + (1 - ewma_alphas) * smoothed_data
+        # Detected Drift (After CUSUM)
+        if cusum_thresholds is not None:
+            detected = np.abs(smoothed_data - averages) > cusum_thresholds
+        else:
+            detected = np.zeros_like(data_points, dtype=bool)
+        result['EWMA'] = {'detected': detected, 'smoothed_data': smoothed_data}
+
+    return result

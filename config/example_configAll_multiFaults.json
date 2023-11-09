@@ -1,0 +1,202 @@
+{
+    "temp5Bias": {
+        "tag_name": "temp5Bias",
+        "type_to_check": {
+            "frozen": true,
+            "boundary": true,
+            "dynamics": true,
+            "drift": true
+        },
+        "frozen_threshold": 0.01,
+        "tracking_size": 5,
+        "boundary_limits": {
+            "high": 1256.5539619901,
+            "low": 1017.898312688838
+        },
+        "dynamic_threshold": 11.861676080530238,
+        "drift_params": {
+            "average": 1191.8706866973127,
+            "cusum_threshold": 35.45002903991215,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 1189.7416180275816,
+            "cusum_limit": 5,
+            "cusum_plus": 0,
+            "cusum_minus": 0
+        },
+        "statistic": {
+            "mean": 1137.226137339469,
+            "std": 39.77594155021033,
+            "median": 1192.98,
+            "quantile1": 1183.84,
+            "quantile3": 1201.05,
+            "iqr": 17.210000000000036,
+            "min": 1126.27,
+            "max": 1243.11,
+            "oldest_value": 1171.66,
+            "tracking_size": 5,
+            "boundary_type": "moving",
+            "tracked_size": 5,
+            "sigma_level": 3
+        }
+    },
+    "temp5Frozen": {
+        "tag_name": "temp5Frozen",
+        "type_to_check": {
+            "frozen": true,
+            "boundary": true,
+            "dynamics": true,
+            "drift": true
+        },
+        "frozen_threshold": 0.01,
+        "tracking_size": 5,
+        "boundary_limits": {
+            "high": 1256.5539619901,
+            "low": 1017.898312688838
+        },
+        "dynamic_threshold": 11.861676080530238,
+        "drift_params": {
+            "average": 1191.8706866973127,
+            "cusum_threshold": 35.45002903991215,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 1189.7416180275816,
+            "cusum_limit": 5,
+            "cusum_plus": 0,
+            "cusum_minus": 0
+        },
+        "statistic": {
+            "mean": 1137.226137339469,
+            "std": 39.77594155021033,
+            "median": 1192.98,
+            "quantile1": 1183.84,
+            "quantile3": 1201.05,
+            "iqr": 17.210000000000036,
+            "min": 1126.27,
+            "max": 1243.11,
+            "oldest_value": 1171.66,
+            "tracking_size": 5,
+            "boundary_type": "moving",
+            "tracked_size": 5,
+            "sigma_level": 3
+        }
+    },
+    "temp5Drift": {
+        "tag_name": "temp5Drift",
+        "type_to_check": {
+            "frozen": true,
+            "boundary": true,
+            "dynamics": true,
+            "drift": true
+        },
+        "frozen_threshold": 0.01,
+        "tracking_size": 5,
+        "boundary_limits": {
+            "high": 1256.5539619901,
+            "low": 1017.898312688838
+        },
+        "dynamic_threshold": 11.861676080530238,
+        "drift_params": {
+            "average": 1191.8706866973127,
+            "cusum_threshold": 35.45002903991215,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 1189.7416180275816,
+            "cusum_limit": 5,
+            "cusum_plus": 0,
+            "cusum_minus": 0
+        },
+        "statistic": {
+            "mean": 1137.226137339469,
+            "std": 39.77594155021033,
+            "median": 1192.98,
+            "quantile1": 1183.84,
+            "quantile3": 1201.05,
+            "iqr": 17.210000000000036,
+            "min": 1126.27,
+            "max": 1243.11,
+            "oldest_value": 1171.66,
+            "tracking_size": 5,
+            "boundary_type": "moving",
+            "tracked_size": 5,
+            "sigma_level": 3
+        }
+    },
+    "temp5Gain": {
+        "tag_name": "temp5Gain",
+        "type_to_check": {
+            "frozen": true,
+            "boundary": true,
+            "dynamics": true,
+            "drift": true
+        },
+        "frozen_threshold": 0.01,
+        "tracking_size": 5,
+        "boundary_limits": {
+            "high": 1256.5539619901,
+            "low": 1017.898312688838
+        },
+        "dynamic_threshold": 11.861676080530238,
+        "drift_params": {
+            "average": 1191.8706866973127,
+            "cusum_threshold": 35.45002903991215,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 1189.7416180275816,
+            "cusum_limit": 5,
+            "cusum_plus": 0,
+            "cusum_minus": 0
+        },
+        "statistic": {
+            "mean": 1137.226137339469,
+            "std": 39.77594155021033,
+            "median": 1192.98,
+            "quantile1": 1183.84,
+            "quantile3": 1201.05,
+            "iqr": 17.210000000000036,
+            "min": 1126.27,
+            "max": 1243.11,
+            "oldest_value": 1171.66,
+            "tracking_size": 5,
+            "boundary_type": "moving",
+            "tracked_size": 5,
+            "sigma_level": 3
+        }
+    },
+    "temp5All": {
+        "tag_name": "temp5All",
+        "type_to_check": {
+            "frozen": true,
+            "boundary": true,
+            "dynamics": true,
+            "drift": true
+        },
+        "frozen_threshold": 0.01,
+        "tracking_size": 5,
+        "boundary_limits": {
+            "high": 1256.5539619901,
+            "low": 1017.898312688838
+        },
+        "dynamic_threshold": 11.861676080530238,
+        "drift_params": {
+            "average": 1191.8706866973127,
+            "cusum_threshold": 35.45002903991215,
+            "ewma_alpha": 0.1,
+            "ewma_smoothed": 1189.7416180275816,
+            "cusum_limit": 5,
+            "cusum_plus": 0,
+            "cusum_minus": 0
+        },
+        "statistic": {
+            "mean": 1137.226137339469,
+            "std": 39.77594155021033,
+            "median": 1192.98,
+            "quantile1": 1183.84,
+            "quantile3": 1201.05,
+            "iqr": 17.210000000000036,
+            "min": 1126.27,
+            "max": 1243.11,
+            "oldest_value": 1171.66,
+            "tracking_size": 5,
+            "boundary_type": "moving",
+            "tracked_size": 5,
+            "sigma_level": 3
+        }
+    }
+}
